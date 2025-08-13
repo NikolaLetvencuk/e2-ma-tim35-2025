@@ -1,0 +1,67 @@
+package com.example.dailyboss.service;
+
+import android.content.Context;
+
+import com.example.dailyboss.data.CategoryDAO;
+import com.example.dailyboss.model.Category;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+public class CategoryService {
+
+    private final CategoryDAO categoryDAO;
+
+    public CategoryService(Context context) {
+        this.categoryDAO = new CategoryDAO(context);
+    }
+
+    /**
+     * Dodaje novu kategoriju nakon validacije.
+     * @param name naziv kategorije (ne sme biti prazan)
+     * @param color boja kategorije (ne sme biti zauzeta)
+     * @return true ako je uspešno dodat, false ako nije
+     * @throws IllegalArgumentException ako validacija nije prošla
+     */
+
+    public boolean addCategory(String name, String color) throws IllegalArgumentException {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Category name cannot be empty");
+        }
+
+        if (color == null || categoryDAO.existsColor(color)) {
+            throw new IllegalArgumentException("Color has already taken");
+        }
+
+        String id = UUID.randomUUID().toString();
+        Category category = new Category(id, color, name);
+        android.util.Log.d("CategoryService",
+                "Dodajem kategoriju: ID=" + category.getId() + ", Name=" + category.getName() + ", Color=" + category.getColor());
+        return  categoryDAO.insert(category);
+    }
+
+    public List<Category> getAllCategories() {
+        return categoryDAO.getAll();
+    }
+
+
+
+    /**
+     * Menja boju postojeće kategorije ako nova boja nije zauzeta.
+     * @param id ID kategorije za izmenu
+     * @param newColor nova boja
+     * @return true ako je uspešno ažurirano
+     * @throws IllegalArgumentException ako je boja zauzeta
+     */
+    public boolean updateCategoryColor(String id, String newColor) throws IllegalArgumentException {
+        List<Category> categories = categoryDAO.getAll();
+        for (Category category : categories) {
+            if (category.getColor().equalsIgnoreCase(newColor) && !category.getId().equals(id)) {
+                throw new IllegalArgumentException("Color has been already taken");
+            }
+        }
+
+        return categoryDAO.updateColor(id, newColor);
+    }
+}

@@ -1,0 +1,79 @@
+package com.example.dailyboss.adapters;
+
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+import android.graphics.drawable.GradientDrawable;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.dailyboss.R;
+import com.example.dailyboss.model.Category;
+
+import java.util.List;
+
+public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder> {
+
+    public interface OnItemClickListener {
+        void onItemClick(Category category, int position);
+    }
+
+    private final List<Category> categories;
+    private final OnItemClickListener listener;
+
+    public CategoryAdapter(List<Category> categories, OnItemClickListener listener) {
+        this.categories = categories;
+        this.listener = listener;
+    }
+
+    @NonNull
+    @Override
+    public CategoryViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_category, parent, false);
+        return new CategoryViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull CategoryViewHolder holder, int position) {
+        Category category = categories.get(position);
+        holder.name.setText(category.getName());
+
+        GradientDrawable bgDrawable = (GradientDrawable) holder.categoryItemLayout.getBackground();
+        try {
+            bgDrawable.setColor(Color.parseColor(category.getColor()));
+        } catch (IllegalArgumentException e) {
+            bgDrawable.setColor(Color.WHITE);
+        }
+
+        holder.itemView.setOnClickListener(v ->
+                listener.onItemClick(category, holder.getAdapterPosition())
+        );
+    }
+
+    @Override
+    public int getItemCount() {
+        return categories.size();
+    }
+
+    static class CategoryViewHolder extends RecyclerView.ViewHolder {
+        TextView name;
+        View categoryItemLayout;
+
+        public CategoryViewHolder(@NonNull View itemView) {
+            super(itemView);
+            name = itemView.findViewById(R.id.textCategoryName);
+            categoryItemLayout = itemView.findViewById(R.id.categoryItemLayout);
+        }
+    }
+
+    public void updateCategories(List<Category> newCategories) {
+        categories.clear();
+        categories.addAll(newCategories);
+        notifyDataSetChanged();
+    }
+}

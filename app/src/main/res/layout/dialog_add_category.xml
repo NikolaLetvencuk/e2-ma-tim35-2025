@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <EditText
+        android:id="@+id/editTextCategoryName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Unesite naziv kategorije"
+        android:inputType="textPersonName" />
+
+    <TextView
+        android:id="@+id/textChooseColor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Izaberite boju:"
+        android:layout_marginTop="16dp" />
+
+    <!-- Mesto za izbor boje - možeš koristiti neki ColorPicker ili jednostavne dugmiće -->
+    <LinearLayout
+        android:id="@+id/colorPalette"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        android:weightSum="5">
+
+        <!-- Primer 5 kvadrata boja -->
+        <View
+            android:id="@+id/colorRed"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:background="#F44336"
+            android:layout_marginEnd="8dp" />
+
+        <View
+            android:id="@+id/colorBlue"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:background="#2196F3"
+            android:layout_marginEnd="8dp" />
+
+        <View
+            android:id="@+id/colorGreen"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:background="#4CAF50"
+            android:layout_marginEnd="8dp" />
+
+        <View
+            android:id="@+id/colorYellow"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:background="#FFEB3B"
+            android:layout_marginEnd="8dp" />
+
+        <View
+            android:id="@+id/colorPurple"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:background="#9C27B0" />
+
+    </LinearLayout>
+
+</LinearLayout>
