@@ -1,6 +1,9 @@
 package com.example.dailyboss;
 
 import android.os.Bundle;
+import android.view.MenuItem;
+import android.view.View;
+
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.dailyboss.fragments.CategoryListFragment;
 import com.example.dailyboss.fragments.HomeFragment;
@@ -20,6 +23,20 @@ public class MainActivity extends AppCompatActivity {
                 .commit();
 
         bottomNavigationView.setOnItemSelectedListener(item -> {
+
+            for (int i = 0; i < bottomNavigationView.getMenu().size(); i++) {
+                MenuItem menuItem = bottomNavigationView.getMenu().getItem(i);
+                View icon = bottomNavigationView.findViewById(menuItem.getItemId());
+
+                if (menuItem.getItemId() == item.getItemId()) {
+                    icon.setScaleX(1.3f);
+                    icon.setScaleY(1.3f);
+                } else {
+                    icon.setScaleX(1f);
+                    icon.setScaleY(1f);
+                }
+            }
+
             if (item.getItemId() == R.id.nav_home) {
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container, new HomeFragment())
@@ -31,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
                         .commit();
                 return true;
             }
+
             return false;
         });
     }

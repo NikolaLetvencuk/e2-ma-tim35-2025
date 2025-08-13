@@ -20,6 +20,7 @@ import com.example.dailyboss.R;
 import com.example.dailyboss.adapters.CategoryAdapter;
 import com.example.dailyboss.model.Category;
 import com.example.dailyboss.service.CategoryService;
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.List;
@@ -60,7 +61,7 @@ public class CategoryListFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        FloatingActionButton fabAdd = view.findViewById(R.id.fabAddCategory);
+        ExtendedFloatingActionButton fabAdd = view.findViewById(R.id.fabAddCategory);
         fabAdd.setOnClickListener(v -> {
             LayoutInflater inflater = LayoutInflater.from(requireContext());
             View dialogView = inflater.inflate(R.layout.dialog_add_category, null);

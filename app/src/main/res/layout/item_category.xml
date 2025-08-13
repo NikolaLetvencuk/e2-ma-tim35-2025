@@ -1,23 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/categoryItemLayout"
     android:layout_width="match_parent"
-    android:layout_height="120dp"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="15dp"
+    android:layout_height="115dp"
     android:background="@drawable/category_item_border"
     android:elevation="6dp"
     android:clipToOutline="true"
-    android:translationZ="6dp">
+    android:translationZ="6dp"
+    android:padding="10dp">
 
     <TextView
         android:id="@+id/textCategoryName"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:scrollHorizontally="false"
         android:text="Category Name"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:gravity="center"
-        android:textColor="@color/white"/>
-</LinearLayout>
+        android:textColor="@color/white"
+        android:layout_marginTop="-5dp"/>
+
+
+    <TextView
+        android:id="@+id/textTaskCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|start"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="8dp"
+        android:text="10 tasks"
+        android:textColor="@color/white"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+</FrameLayout>
