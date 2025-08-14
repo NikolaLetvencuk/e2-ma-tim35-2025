@@ -43,7 +43,12 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
         Category category = categories.get(position);
         holder.name.setText(category.getName());
 
-        GradientDrawable bgDrawable = (GradientDrawable) holder.categoryItemLayout.getBackground();
+        GradientDrawable bgDrawable = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] {Color.parseColor(category.getColor()), Color.WHITE}
+        );
+        bgDrawable.setCornerRadius(16f);
+        holder.categoryItemLayout.setBackground(bgDrawable);
         try {
             bgDrawable.setColor(Color.parseColor(category.getColor()));
         } catch (IllegalArgumentException e) {

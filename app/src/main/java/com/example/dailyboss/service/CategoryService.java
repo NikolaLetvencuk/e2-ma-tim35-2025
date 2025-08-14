@@ -1,6 +1,7 @@
 package com.example.dailyboss.service;
 
 import android.content.Context;
+import android.graphics.Color;
 
 import com.example.dailyboss.data.CategoryDAO;
 import com.example.dailyboss.model.Category;
@@ -30,7 +31,7 @@ public class CategoryService {
             throw new IllegalArgumentException("Category name cannot be empty");
         }
 
-        if (color == null || categoryDAO.existsColor(color)) {
+        if (color == null || isColorSimilar(color)) {
             throw new IllegalArgumentException("Color has already taken");
         }
 
@@ -45,7 +46,31 @@ public class CategoryService {
         return categoryDAO.getAll();
     }
 
+    private static final double COLOR_THRESHOLD = 20.0; // prag razlike, manji = strožije
 
+    private boolean isColorSimilar(String newColorHex) {
+        List<String> existingColors = categoryDAO.getAllColors();
+        int newColorInt = Color.parseColor(newColorHex);
+
+        int newR = Color.red(newColorInt);
+        int newG = Color.green(newColorInt);
+        int newB = Color.blue(newColorInt);
+
+        for (String existingHex : existingColors) {
+            int existingInt = Color.parseColor(existingHex);
+            int r = Color.red(existingInt);
+            int g = Color.green(existingInt);
+            int b = Color.blue(existingInt);
+
+            double distance = Math.sqrt(Math.pow(newR - r, 2) +
+                    Math.pow(newG - g, 2) +
+                    Math.pow(newB - b, 2));
+            if (distance <= COLOR_THRESHOLD) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * Menja boju postojeće kategorije ako nova boja nije zauzeta.

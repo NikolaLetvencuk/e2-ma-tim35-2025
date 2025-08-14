@@ -66,6 +66,22 @@ public class CategoryDAO {
         return exists;
     }
 
+    public List<String> getAllColors() {
+        List<String> colors = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.query(DatabaseHelper.TABLE_CATEGORIES,
+                new String[]{DatabaseHelper.COL_COLOR},
+                null, null, null, null, null);
+
+        while (cursor.moveToNext()) {
+            colors.add(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_COLOR)));
+        }
+
+        cursor.close();
+        db.close();
+        return colors;
+    }
+
     public boolean updateColor(String id, String newColor) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();

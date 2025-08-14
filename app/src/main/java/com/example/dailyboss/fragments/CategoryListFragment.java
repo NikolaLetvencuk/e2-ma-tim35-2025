@@ -1,19 +1,22 @@
 package com.example.dailyboss.fragments;
 
 import android.app.AlertDialog;
+import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.dailyboss.R;
@@ -21,7 +24,8 @@ import com.example.dailyboss.adapters.CategoryAdapter;
 import com.example.dailyboss.model.Category;
 import com.example.dailyboss.service.CategoryService;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.skydoves.colorpickerview.ColorPickerView;
+import com.skydoves.colorpickerview.listeners.ColorListener;
 
 import java.util.List;
 
@@ -36,16 +40,28 @@ public class CategoryListFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_category_list, container, false);
 
         RecyclerView recyclerView = view.findViewById(R.id.recyclerViewCategories);
-        recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
+        GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 2);
+        recyclerView.setLayoutManager(layoutManager);
 
         int spacingInPixels = getResources().getDimensionPixelSize(R.dimen.category_item_spacing);
+        int extraBottomMargin = 100;
+
         recyclerView.addItemDecoration(new RecyclerView.ItemDecoration() {
             @Override
             public void getItemOffsets(@NonNull Rect outRect, @NonNull View view,
                                        @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
+                int position = parent.getChildAdapterPosition(view);
+                int itemCount = parent.getAdapter().getItemCount();
+                int spanCount = layoutManager.getSpanCount();
+
                 outRect.set(spacingInPixels, spacingInPixels, spacingInPixels, spacingInPixels);
+
+                if (position >= itemCount - (itemCount % spanCount == 0 ? spanCount : itemCount % spanCount)) {
+                    outRect.bottom = extraBottomMargin;
+                }
             }
         });
+
         categoryService = new CategoryService(getContext());
         List<Category> categories = categoryService.getAllCategories();
 
@@ -62,42 +78,71 @@ public class CategoryListFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         ExtendedFloatingActionButton fabAdd = view.findViewById(R.id.fabAddCategory);
-        fabAdd.setOnClickListener(v -> {
-            LayoutInflater inflater = LayoutInflater.from(requireContext());
-            View dialogView = inflater.inflate(R.layout.dialog_add_category, null);
+        fabAdd.setOnClickListener(v -> showAddCategoryDialog());
+    }
 
-            final int[] selectedColor = {0}; // ovde čuvamo izabranu boju
+    private void showAddCategoryDialog() {
+        LayoutInflater inflater = LayoutInflater.from(requireContext());
+        View dialogView = inflater.inflate(R.layout.dialog_add_category, null);
 
-            // Poveži paletu boja
-            dialogView.findViewById(R.id.colorRed).setOnClickListener(c -> selectedColor[0] = 0xFFF44336);
-            dialogView.findViewById(R.id.colorBlue).setOnClickListener(c -> selectedColor[0] = 0xFF2196F3);
-            dialogView.findViewById(R.id.colorGreen).setOnClickListener(c -> selectedColor[0] = 0xFF4CAF50);
-            dialogView.findViewById(R.id.colorYellow).setOnClickListener(c -> selectedColor[0] = 0xFFFFEB3B);
-            dialogView.findViewById(R.id.colorPurple).setOnClickListener(c -> selectedColor[0] = 0xFF9C27B0);
+        EditText et = dialogView.findViewById(R.id.editTextCategoryName);
+        View selectedColorView = dialogView.findViewById(R.id.selectedColorView);
+        ColorPickerView colorPickerView = dialogView.findViewById(R.id.colorPickerView);
 
-            AlertDialog dialog = new AlertDialog.Builder(requireContext())
-                    .setTitle("Create new category")
-                    .setView(dialogView)
-                    .setPositiveButton("Save", (d, which) -> {
-                        EditText et = dialogView.findViewById(R.id.editTextCategoryName);
-                        String name = et.getText().toString().trim();
-                        String colorHex = String.format("#%06X", selectedColor[0]);
+        final int[] selectedColor = {Color.GRAY};
+        selectedColorView.setBackgroundColor(selectedColor[0]);
 
-                        try {
-                            boolean success = categoryService.addCategory(name, colorHex);
-                            if (success) {
-                                Toast.makeText(requireContext(), "Kategorija uspešno dodata!", Toast.LENGTH_SHORT).show();
-                                adapter.updateCategories(categoryService.getAllCategories());
-                            } else {
-                                Toast.makeText(requireContext(), "Greška pri dodavanju kategorije!", Toast.LENGTH_SHORT).show();
-                            }
-                        } catch (IllegalArgumentException e) {
-                            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    })
-                    .setNegativeButton("Cancel", null)
-                    .create();
-            dialog.show();
+        colorPickerView.setColorListener(new ColorListener() {
+            @Override
+            public void onColorSelected(int color, boolean fromUser) {
+                selectedColor[0] = color;
+                selectedColorView.setBackgroundColor(color);
+            }
         });
+
+        LinearLayout row1 = dialogView.findViewById(R.id.suggestedColorsRow1);
+        LinearLayout row2 = dialogView.findViewById(R.id.suggestedColorsRow2);
+
+        addSuggestedColorClickListeners(row1, selectedColorView, selectedColor);
+        addSuggestedColorClickListeners(row2, selectedColorView, selectedColor);
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setTitle("Create new category")
+                .setView(dialogView)
+                .setPositiveButton("Save", null)
+                .setNegativeButton("Cancel", (d, which) -> d.dismiss())
+                .create();
+
+        dialog.show();
+
+        Button saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        saveButton.setOnClickListener(v -> {
+            String name = et.getText().toString().trim();
+            String colorHex = String.format("#%06X", (0xFFFFFF & selectedColor[0]));
+
+            try {
+                boolean success = categoryService.addCategory(name, colorHex);
+                if (success) {
+                    Toast.makeText(requireContext(), "Category successfully added!", Toast.LENGTH_SHORT).show();
+                    adapter.updateCategories(categoryService.getAllCategories());
+                    dialog.dismiss();
+                } else {
+                    Toast.makeText(requireContext(), "Error adding category!", Toast.LENGTH_SHORT).show();
+                }
+            } catch (IllegalArgumentException e) {
+                Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+    }
+
+    private void addSuggestedColorClickListeners(LinearLayout row, View selectedColorView, int[] selectedColor) {
+        for (int i = 0; i < row.getChildCount(); i++) {
+            View colorView = row.getChildAt(i);
+            colorView.setOnClickListener(v -> {
+                selectedColor[0] = ((ColorDrawable) colorView.getBackground()).getColor();
+                selectedColorView.setBackgroundColor(selectedColor[0]);
+            });
+        }
     }
 }
