@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <EditText
+        android:id="@+id/editTextCategoryName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter category name"
+        android:inputType="textPersonName" />
+
+    <TextView
+        android:id="@+id/textChooseColor"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Selected color:"
+        android:layout_marginTop="16dp" />
+
+    <View
+        android:id="@+id/selectedColorView"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginTop="8dp"
+        android:background="#CCCCCC" />
+
+    <com.skydoves.colorpickerview.ColorPickerView
+        android:id="@+id/colorPickerView"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:layout_marginTop="16dp"/>
+
+    <!-- Suggested colors -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Suggested colors:"
+        android:layout_marginTop="16dp" />
+
+    <!-- First row -->
+    <LinearLayout
+        android:id="@+id/suggestedColorsRow1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        android:weightSum="8">
+
+        <View android:layout_width="0dp" android:layout_height="40dp" android:layout_weight="1" android:background="#2196F3" android:layout_marginEnd="4dp"/>
+        <View android:layout_width="0dp" android:layout_height="40dp" android:layout_weight="1" android:background="#FFEB3B" android:layout_marginEnd="4dp"/>
+        <View android:layout_width="0dp" android:layout_height="40dp" android:layout_weight="1" android:background="#4CAF50" android:layout_marginEnd="4dp"/>
+        <View android:layout_width="0dp" android:layout_height="40dp" android:layout_weight="1" android:background="#9C27B0" android:layout_marginEnd="4dp"/>
+        <View android:layout_width="0dp" android:layout_height="40dp" android:layout_weight="1" android:background="#795548" android:layout_marginEnd="4dp"/>
+        <View android:layout_width="0dp" android:layout_height="40dp" android:layout_weight="1" android:background="#F00100" android:layout_marginEnd="4dp"/>
+        <View android:layout_width="0dp" android:layout_height="40dp" android:layout_weight="1" android:background="#FF9800" android:layout_marginEnd="4dp"/>
+        <View android:layout_width="0dp" android:layout_height="40dp" android:layout_weight="1" android:background="#03A9F4"/>
+    </LinearLayout>
+
+    <!-- Second row -->
+    <LinearLayout
+        android:id="@+id/suggestedColorsRow2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        android:weightSum="8">
+
+        <View android:layout_width="0dp" android:layout_height="40dp" android:layout_weight="1" android:background="#8B884A" android:layout_marginEnd="4dp"/>
+        <View android:layout_width="0dp" android:layout_height="40dp" android:layout_weight="1" android:background="#E91E63" android:layout_marginEnd="4dp"/>
+        <View android:layout_width="0dp" android:layout_height="40dp" android:layout_weight="1" android:background="#FFC107" android:layout_marginEnd="4dp"/>
+        <View android:layout_width="0dp" android:layout_height="40dp" android:layout_weight="1" android:background="#00BCD4" android:layout_marginEnd="4dp"/>
+        <View android:layout_width="0dp" android:layout_height="40dp" android:layout_weight="1" android:background="#CDDC39" android:layout_marginEnd="4dp"/>
+        <View android:layout_width="0dp" android:layout_height="40dp" android:layout_weight="1" android:background="#673AB7" android:layout_marginEnd="4dp"/>
+        <View android:layout_width="0dp" android:layout_height="40dp" android:layout_weight="1" android:background="#FF5722" android:layout_marginEnd="4dp"/>
+        <View android:layout_width="0dp" android:layout_height="40dp" android:layout_weight="1" android:background="#9E9E9E"/>
+    </LinearLayout>
+
+</LinearLayout>
