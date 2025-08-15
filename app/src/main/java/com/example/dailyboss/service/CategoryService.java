@@ -3,19 +3,19 @@ package com.example.dailyboss.service;
 import android.content.Context;
 import android.graphics.Color;
 
-import com.example.dailyboss.data.CategoryDAO;
+import com.example.dailyboss.data.CategoryDao;
 import com.example.dailyboss.model.Category;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 public class CategoryService {
 
-    private final CategoryDAO categoryDAO;
+    private final CategoryDao categoryDAO;
 
     public CategoryService(Context context) {
-        this.categoryDAO = new CategoryDAO(context);
+
+        this.categoryDAO = new CategoryDao(context);
     }
 
     /**

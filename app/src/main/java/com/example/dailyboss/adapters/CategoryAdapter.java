@@ -2,6 +2,7 @@ package com.example.dailyboss.adapters;
 
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,11 +23,11 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
         void onItemClick(Category category, int position);
     }
 
-    private final List<Category> categories;
+    private final List<Pair<Category, Integer>> categoriesWithCount;
     private final OnItemClickListener listener;
 
-    public CategoryAdapter(List<Category> categories, OnItemClickListener listener) {
-        this.categories = categories;
+    public CategoryAdapter(List<Pair<Category, Integer>> categoriesWithCount, OnItemClickListener listener) {
+        this.categoriesWithCount = categoriesWithCount;
         this.listener = listener;
     }
 
@@ -40,8 +41,12 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
 
     @Override
     public void onBindViewHolder(@NonNull CategoryViewHolder holder, int position) {
-        Category category = categories.get(position);
+        Pair<Category, Integer> item = categoriesWithCount.get(position);
+        Category category = item.first;
+        int taskCount = item.second;
+
         holder.name.setText(category.getName());
+        holder.textTaskCount.setText(String.valueOf(taskCount) + " tasks");
 
         GradientDrawable bgDrawable = new GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,
@@ -62,23 +67,25 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
 
     @Override
     public int getItemCount() {
-        return categories.size();
+        return categoriesWithCount.size();
     }
 
     static class CategoryViewHolder extends RecyclerView.ViewHolder {
         TextView name;
         View categoryItemLayout;
+        TextView textTaskCount;
 
         public CategoryViewHolder(@NonNull View itemView) {
             super(itemView);
             name = itemView.findViewById(R.id.textCategoryName);
             categoryItemLayout = itemView.findViewById(R.id.categoryItemLayout);
+            textTaskCount = itemView.findViewById(R.id.textTaskCount);
         }
     }
 
-    public void updateCategories(List<Category> newCategories) {
-        categories.clear();
-        categories.addAll(newCategories);
+    public void updateCategories(List<Pair<Category, Integer>> newCategoriesWithCount) {
+        categoriesWithCount.clear();
+        categoriesWithCount.addAll(newCategoriesWithCount);
         notifyDataSetChanged();
     }
 }

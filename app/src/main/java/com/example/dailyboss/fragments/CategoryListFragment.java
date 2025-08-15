@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,10 +24,12 @@ import com.example.dailyboss.R;
 import com.example.dailyboss.adapters.CategoryAdapter;
 import com.example.dailyboss.model.Category;
 import com.example.dailyboss.service.CategoryService;
+import com.example.dailyboss.service.TaskInstanceService;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.skydoves.colorpickerview.ColorPickerView;
 import com.skydoves.colorpickerview.listeners.ColorListener;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class CategoryListFragment extends Fragment {
@@ -62,10 +65,23 @@ public class CategoryListFragment extends Fragment {
             }
         });
 
+        // Postavi servis za kategorije
         categoryService = new CategoryService(getContext());
+        // Kreiraj servis za zadatke (ovo je novi dio)
+        TaskInstanceService taskInstanceService = new TaskInstanceService(getContext());
+
+        // 1. Dohvati sve kategorije
         List<Category> categories = categoryService.getAllCategories();
 
-        adapter = new CategoryAdapter(categories, (category, pos) -> {
+        // 2. Pripremi novu listu sa brojem zadataka za svaku kategoriju
+        List<Pair<Category, Integer>> categoriesWithTaskCount = new ArrayList<>();
+        for (Category category : categories) {
+            int taskCount = taskInstanceService.countByCategoyId(category.getId());
+            categoriesWithTaskCount.add(new Pair<>(category, taskCount));
+        }
+
+        // 3. Postavi adapter s pripremljenom listom
+        adapter = new CategoryAdapter(categoriesWithTaskCount, (category, pos) -> {
             // otvori edit dialog, ili napravi toast itd.
         });
         recyclerView.setAdapter(adapter);
@@ -116,6 +132,7 @@ public class CategoryListFragment extends Fragment {
         dialog.show();
 
         Button saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+        // U CategoryListFragment.java, unutar showAddCategoryDialog metode
         saveButton.setOnClickListener(v -> {
             String name = et.getText().toString().trim();
             String colorHex = String.format("#%06X", (0xFFFFFF & selectedColor[0]));
@@ -124,7 +141,18 @@ public class CategoryListFragment extends Fragment {
                 boolean success = categoryService.addCategory(name, colorHex);
                 if (success) {
                     Toast.makeText(requireContext(), "Category successfully added!", Toast.LENGTH_SHORT).show();
-                    adapter.updateCategories(categoryService.getAllCategories());
+
+                    // Ispravi ovaj dio! Dohvati i prebroji zadatke ponovo
+                    List<Category> newCategories = categoryService.getAllCategories();
+                    TaskInstanceService taskInstanceService = new TaskInstanceService(getContext());
+                    List<Pair<Category, Integer>> newCategoriesWithCount = new ArrayList<>();
+                    for (Category category : newCategories) {
+                        int taskCount = taskInstanceService.countByCategoyId(String.valueOf(category.getId()));
+                        newCategoriesWithCount.add(new Pair<>(category, taskCount));
+                    }
+                    // Pozovi updateCategories s novom pripremljenom listom
+                    adapter.updateCategories(newCategoriesWithCount);
+
                     dialog.dismiss();
                 } else {
                     Toast.makeText(requireContext(), "Error adding category!", Toast.LENGTH_SHORT).show();
@@ -133,7 +161,6 @@ public class CategoryListFragment extends Fragment {
                 Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
-
     }
 
     private void addSuggestedColorClickListeners(LinearLayout row, View selectedColorView, int[] selectedColor) {

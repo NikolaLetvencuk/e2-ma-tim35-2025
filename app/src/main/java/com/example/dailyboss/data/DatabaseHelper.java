@@ -34,12 +34,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COL_INSTANCE_DATE = "instanceDate";
     public static final String COL_INSTANCE_STATUS = "status";
     public static final String COL_INSTANCE_TEMPLATE_ID = "templateId";
-    public static final String COL_INSTANCE_CATEGORY_ID = "categoryId";
-    public static final String COL_INSTANCE_NAME = "name";
-    public static final String COL_INSTANCE_DESCRIPTION = "description";
-    public static final String COL_INSTANCE_DIFFICULTY = "difficulty";
-    public static final String COL_INSTANCE_IMPORTANCE = "importance";
-    public static final String COL_INSTANCE_XP_VALUE = "xpValue";
 
     private static final String CREATE_TABLE_CATEGORIES =
             "CREATE TABLE " + TABLE_CATEGORIES + " (" +
@@ -71,12 +65,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     COL_INSTANCE_DATE + " INTEGER NOT NULL," +
                     COL_INSTANCE_STATUS + " TEXT," +
                     COL_INSTANCE_TEMPLATE_ID + " TEXT," +
-                    COL_INSTANCE_CATEGORY_ID + " TEXT," +
-                    COL_INSTANCE_NAME + " TEXT NOT NULL," +
-                    COL_INSTANCE_DESCRIPTION + " TEXT," +
-                    COL_INSTANCE_DIFFICULTY + " TEXT," +
-                    COL_INSTANCE_IMPORTANCE + " TEXT," +
-                    COL_INSTANCE_XP_VALUE + " INTEGER" +
                     ");";
 
     public DatabaseHelper(Context context) {
