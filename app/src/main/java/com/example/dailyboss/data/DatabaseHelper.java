@@ -30,7 +30,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public static final String TABLE_TASK_INSTANCES = "task_instances";
     public static final String COL_INSTANCE_ID = "instanceId";
-    public static final String COL_INSTANCE_TASK_ID = "taskId";
     public static final String COL_INSTANCE_DATE = "instanceDate";
     public static final String COL_INSTANCE_STATUS = "status";
     public static final String COL_INSTANCE_TEMPLATE_ID = "templateId";
@@ -61,10 +60,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String CREATE_TABLE_TASK_INSTANCES =
             "CREATE TABLE " + TABLE_TASK_INSTANCES + " (" +
                     COL_INSTANCE_ID + " TEXT PRIMARY KEY," +
-                    COL_INSTANCE_TASK_ID + " TEXT," +
                     COL_INSTANCE_DATE + " INTEGER NOT NULL," +
                     COL_INSTANCE_STATUS + " TEXT," +
-                    COL_INSTANCE_TEMPLATE_ID + " TEXT," +
+                    COL_INSTANCE_TEMPLATE_ID + " TEXT" +
                     ");";
 
     public DatabaseHelper(Context context) {

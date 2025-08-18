@@ -6,7 +6,7 @@
         android:icon="@drawable/ic_quest" />
 
     <item
-        android:id="@+id/nav_home2"
+        android:id="@+id/activity_tasks"
         android:title="Home"
         android:icon="@drawable/ic_home" />
 

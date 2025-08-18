@@ -13,12 +13,12 @@ public class TaskTemplate {
     private int frequencyInterval;
     private FrequencyUnit frequencyUnit;
     private long startDate;
-    private Long endDate;
+    private long endDate;
     private TaskDifficulty difficulty;
     private TaskImportance importance;
     private boolean isRecurring;
 
-    public TaskTemplate(String templateId, String categoryId, String name, String description, String executionTime, int frequencyInterval, FrequencyUnit frequencyUnit, long startDate, Long endDate, TaskDifficulty difficulty, TaskImportance importance, boolean isRecurring) {
+    public TaskTemplate(String templateId, String categoryId, String name, String description, String executionTime, int frequencyInterval, FrequencyUnit frequencyUnit, long startDate, long endDate, TaskDifficulty difficulty, TaskImportance importance, boolean isRecurring) {
         this.templateId = templateId;
         this.categoryId = categoryId;
         this.name = name;

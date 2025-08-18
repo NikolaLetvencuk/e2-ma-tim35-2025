@@ -3,7 +3,9 @@ package com.example.dailyboss;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.dailyboss.fragments.CategoryListFragment;
+import com.example.dailyboss.fragments.CreateTaskFragment;
 import com.example.dailyboss.fragments.HomeFragment;
+import com.example.dailyboss.fragments.TasksFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
@@ -30,6 +32,10 @@ public class MainActivity extends AppCompatActivity {
                         .replace(R.id.fragment_container, new CategoryListFragment())
                         .commit();
                 return true;
+            } else if (item.getItemId() == R.id.activity_tasks) {
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, new TasksFragment())
+                        .commit();
             }
             return false;
         });

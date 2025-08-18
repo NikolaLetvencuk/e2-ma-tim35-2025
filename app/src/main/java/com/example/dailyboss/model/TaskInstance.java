@@ -6,14 +6,12 @@ import com.example.dailyboss.enums.TaskStatus;
 
 public class TaskInstance {
     private String instanceId;
-    private String taskId;
     private long instanceDate;
     private TaskStatus status;
     private String templateId;
 
-    public TaskInstance(String instanceId, String taskId, long instanceDate, TaskStatus status, String templateId) {
+    public TaskInstance(String instanceId, long instanceDate, TaskStatus status, String templateId) {
         this.instanceId = instanceId;
-        this.taskId = taskId;
         this.instanceDate = instanceDate;
         this.status = status;
         this.templateId = templateId;
@@ -28,14 +26,6 @@ public class TaskInstance {
 
     public void setInstanceId(String instanceId) {
         this.instanceId = instanceId;
-    }
-
-    public String getTaskId() {
-        return taskId;
-    }
-
-    public void setTaskId(String taskId) {
-        this.taskId = taskId;
     }
 
     public long getInstanceDate() {

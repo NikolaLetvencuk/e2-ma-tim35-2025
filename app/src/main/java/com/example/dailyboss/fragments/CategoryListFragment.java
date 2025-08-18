@@ -65,24 +65,18 @@ public class CategoryListFragment extends Fragment {
             }
         });
 
-        // Postavi servis za kategorije
         categoryService = new CategoryService(getContext());
-        // Kreiraj servis za zadatke (ovo je novi dio)
         TaskInstanceService taskInstanceService = new TaskInstanceService(getContext());
 
-        // 1. Dohvati sve kategorije
         List<Category> categories = categoryService.getAllCategories();
 
-        // 2. Pripremi novu listu sa brojem zadataka za svaku kategoriju
         List<Pair<Category, Integer>> categoriesWithTaskCount = new ArrayList<>();
         for (Category category : categories) {
             int taskCount = taskInstanceService.countByCategoyId(category.getId());
             categoriesWithTaskCount.add(new Pair<>(category, taskCount));
         }
 
-        // 3. Postavi adapter s pripremljenom listom
         adapter = new CategoryAdapter(categoriesWithTaskCount, (category, pos) -> {
-            // otvori edit dialog, ili napravi toast itd.
         });
         recyclerView.setAdapter(adapter);
 
@@ -132,7 +126,6 @@ public class CategoryListFragment extends Fragment {
         dialog.show();
 
         Button saveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-        // U CategoryListFragment.java, unutar showAddCategoryDialog metode
         saveButton.setOnClickListener(v -> {
             String name = et.getText().toString().trim();
             String colorHex = String.format("#%06X", (0xFFFFFF & selectedColor[0]));
@@ -142,7 +135,6 @@ public class CategoryListFragment extends Fragment {
                 if (success) {
                     Toast.makeText(requireContext(), "Category successfully added!", Toast.LENGTH_SHORT).show();
 
-                    // Ispravi ovaj dio! Dohvati i prebroji zadatke ponovo
                     List<Category> newCategories = categoryService.getAllCategories();
                     TaskInstanceService taskInstanceService = new TaskInstanceService(getContext());
                     List<Pair<Category, Integer>> newCategoriesWithCount = new ArrayList<>();
@@ -150,7 +142,6 @@ public class CategoryListFragment extends Fragment {
                         int taskCount = taskInstanceService.countByCategoyId(String.valueOf(category.getId()));
                         newCategoriesWithCount.add(new Pair<>(category, taskCount));
                     }
-                    // Pozovi updateCategories s novom pripremljenom listom
                     adapter.updateCategories(newCategoriesWithCount);
 
                     dialog.dismiss();

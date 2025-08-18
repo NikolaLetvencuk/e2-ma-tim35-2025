@@ -5,4 +5,8 @@
     <color name="purple_500">#6200EE</color>
     <color name="purple_100">#E1BEE7</color>
     <color name="yellow">#FFEB3B</color>
+    <color name="normal">#9E9E9E</color>
+    <color name="important">#2196F3</color>
+    <color name="extreme">#9C27B0</color>
+    <color name="special">#9C27B0</color>
 </resources>

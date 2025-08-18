@@ -11,6 +11,7 @@ import com.example.dailyboss.enums.TaskStatus;
 import com.example.dailyboss.model.TaskInstance;
 import com.example.dailyboss.model.TaskTemplate;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,11 +25,9 @@ public class TaskInstanceService {
     }
 
     public boolean addTaskInstance(String taskId, long instanceDate, TaskStatus status,
-                                   String templateId, String categoryId, String name,
-                                   String description, TaskDifficulty difficulty,
-                                   TaskImportance importance, int xpValue) {
+                                   String templateId) {
         String instanceId = UUID.randomUUID().toString();
-        TaskInstance taskInstance = new TaskInstance(instanceId, taskId, instanceDate, status,
+        TaskInstance taskInstance = new TaskInstance(instanceId, instanceDate, status,
                 templateId);
         return taskInstanceDAO.insert(taskInstance);
     }
@@ -52,5 +51,31 @@ public class TaskInstanceService {
             count += taskInstanceDAO.getByTaskId(task.getTemplateId());
         }
         return count;
+    }
+
+    public List<TaskInstance> getTasksByDateRange(long startTimestamp, long endTimestamp) {
+        long startOfDay = getStartOfDay(startTimestamp);
+        long endOfDay = getEndOfDay(endTimestamp);
+        return taskInstanceDAO.getTasksByDateRange(startOfDay, endOfDay);
+    }
+
+    private long getStartOfDay(long timestamp) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(timestamp);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTimeInMillis();
+    }
+
+    private long getEndOfDay(long timestamp) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(timestamp);
+        cal.set(Calendar.HOUR_OF_DAY, 23);
+        cal.set(Calendar.MINUTE, 59);
+        cal.set(Calendar.SECOND, 59);
+        cal.set(Calendar.MILLISECOND, 999);
+        return cal.getTimeInMillis();
     }
 }

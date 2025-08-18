@@ -11,7 +11,10 @@ import com.example.dailyboss.enums.TaskImportance;
 import com.example.dailyboss.model.TaskTemplate;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class TaskTemplateDao {
 
@@ -139,5 +142,56 @@ public class TaskTemplateDao {
         cursor.close();
         db.close();
         return list;
+    }
+
+    public Map<String, TaskTemplate> getTaskTemplatesByIds(Set<String> ids) {
+        Map<String, TaskTemplate> result = new HashMap<>();
+
+        if (ids == null || ids.isEmpty()) return result;
+
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        StringBuilder placeholders = new StringBuilder();
+        for (int i = 0; i < ids.size(); i++) {
+            placeholders.append("?");
+            if (i < ids.size() - 1) placeholders.append(",");
+        }
+
+        String sql = "SELECT * FROM " + DatabaseHelper.TABLE_TASK_TEMPLATES +
+                " WHERE " + DatabaseHelper.COL_TEMPLATE_ID + " IN (" + placeholders + ")";
+        Cursor cursor = db.rawQuery(sql, ids.toArray(new String[0]));
+
+        if (cursor.moveToFirst()) {
+            do {
+                String templateId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_ID));
+                String categoryId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_CATEGORY_ID));
+                String name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_NAME));
+                String description = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_DESCRIPTION));
+                String executionTime = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_EXECUTION_TIME));
+                int frequencyInterval = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_FREQUENCY_INTERVAL));
+                FrequencyUnit frequencyUnit = FrequencyUnit.valueOf(
+                        cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_FREQUENCY_UNIT))
+                );
+                long startDate = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_START_DATE));
+                Long endDate = cursor.isNull(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_END_DATE))
+                        ? null
+                        : cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_END_DATE));
+                TaskDifficulty difficulty = TaskDifficulty.valueOf(
+                        cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_DIFFICULTY))
+                );
+                TaskImportance importance = TaskImportance.valueOf(
+                        cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_IMPORTANCE))
+                );
+                boolean isRecurring = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_IS_RECURRING)) == 1;
+
+                TaskTemplate template = new TaskTemplate(templateId, categoryId, name, description, executionTime, frequencyInterval, frequencyUnit, startDate, endDate, difficulty, importance, isRecurring);
+
+                result.put(templateId, template);
+
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        db.close();
+        return result;
     }
 }

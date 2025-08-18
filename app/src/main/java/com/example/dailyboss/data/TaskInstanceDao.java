@@ -5,11 +5,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.example.dailyboss.enums.TaskDifficulty;
-import com.example.dailyboss.enums.TaskImportance;
 import com.example.dailyboss.enums.TaskStatus;
 import com.example.dailyboss.model.TaskInstance;
-import com.example.dailyboss.model.TaskTemplate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +23,6 @@ public class TaskInstanceDao {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.COL_INSTANCE_ID, taskInstance.getInstanceId());
-        values.put(DatabaseHelper.COL_INSTANCE_TASK_ID, taskInstance.getTaskId());
         values.put(DatabaseHelper.COL_INSTANCE_DATE, taskInstance.getInstanceDate());
         values.put(DatabaseHelper.COL_INSTANCE_STATUS, taskInstance.getStatus().name());
         values.put(DatabaseHelper.COL_INSTANCE_TEMPLATE_ID, taskInstance.getTemplateId());
@@ -45,12 +41,11 @@ public class TaskInstanceDao {
         if (cursor.moveToFirst()) {
             do {
                 String instanceId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_ID));
-                String taskId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_TASK_ID));
                 long instanceDate = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_DATE));
                 TaskStatus status = TaskStatus.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_STATUS)));
                 String templateId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_TEMPLATE_ID));
 
-                list.add(new TaskInstance(instanceId, taskId, instanceDate, status, templateId));
+                list.add(new TaskInstance(instanceId, instanceDate, status, templateId));
             } while (cursor.moveToNext());
         }
         cursor.close();
@@ -61,7 +56,6 @@ public class TaskInstanceDao {
     public boolean update(TaskInstance taskInstance) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put(DatabaseHelper.COL_INSTANCE_TASK_ID, taskInstance.getTaskId());
         values.put(DatabaseHelper.COL_INSTANCE_DATE, taskInstance.getInstanceDate());
         values.put(DatabaseHelper.COL_INSTANCE_STATUS, taskInstance.getStatus().name());
         values.put(DatabaseHelper.COL_INSTANCE_TEMPLATE_ID, taskInstance.getTemplateId());
@@ -84,7 +78,7 @@ public class TaskInstanceDao {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
         String query = "SELECT COUNT(*) FROM " + DatabaseHelper.TABLE_TASK_INSTANCES +
-                " WHERE " + DatabaseHelper.COL_INSTANCE_TASK_ID + " = ?";
+                " WHERE " + DatabaseHelper.COL_INSTANCE_TEMPLATE_ID + " = ?";
 
         String[] selectionArgs = { id };
 
@@ -99,5 +93,28 @@ public class TaskInstanceDao {
         db.close();
 
         return count;
+    }
+
+    public List<TaskInstance> getTasksByDateRange(long start, long end) {
+        List<TaskInstance> taskInstances = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        String selection = DatabaseHelper.COL_INSTANCE_DATE + " BETWEEN ? AND ?";
+        String[] selectionArgs = { String.valueOf(start), String.valueOf(end) };
+
+        Cursor cursor = db.query(DatabaseHelper.TABLE_TASK_INSTANCES, null, selection, selectionArgs, null, null, null);
+
+        while (cursor.moveToNext()) {
+            taskInstances.add(new TaskInstance(
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_ID)),
+                    cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_DATE)),
+                    TaskStatus.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_STATUS))),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_TEMPLATE_ID))
+            ));
+        }
+
+        cursor.close();
+        db.close();
+        return taskInstances;
     }
 }
