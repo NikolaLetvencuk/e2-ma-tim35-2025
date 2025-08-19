@@ -9,20 +9,26 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.dailyboss.R;
 import com.example.dailyboss.adapters.TaskAdapter;
 import com.example.dailyboss.dto.TaskItemDto;
+import com.example.dailyboss.model.Category;
 import com.example.dailyboss.model.TaskInstance;
 import com.example.dailyboss.model.TaskTemplate;
+import com.example.dailyboss.service.CategoryService;
 import com.example.dailyboss.service.TaskInstanceService;
 import com.example.dailyboss.service.TaskTemplateService;
 
@@ -36,6 +42,7 @@ public class TasksFragment extends Fragment {
 
     private TaskInstanceService taskInstanceService;
     private TaskTemplateService taskTemplateService;
+    private CategoryService categoryService;
     private TaskAdapter adapter;
 
     @Nullable
@@ -44,7 +51,8 @@ public class TasksFragment extends Fragment {
         View view = inflater.inflate(R.layout.activity_task, container, false);
 
         RecyclerView recyclerView = view.findViewById(R.id.rvTasks1);
-        GridLayoutManager layoutManager = new GridLayoutManager(getContext(), 2);
+
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false);
         recyclerView.setLayoutManager(layoutManager);
 
         int spacingInPixels = getResources().getDimensionPixelSize(R.dimen.category_item_spacing);
@@ -52,7 +60,6 @@ public class TasksFragment extends Fragment {
 
         Button btnNewTask = view.findViewById(R.id.btnNewTask);
         btnNewTask.setOnClickListener(v -> {
-            Log.d("TasksFragment", "Kliknuto na Add New Task dugme!");
             Toast.makeText(getContext(), "Button clicked!", Toast.LENGTH_SHORT).show();
 
             requireActivity().getSupportFragmentManager().beginTransaction()
@@ -61,22 +68,31 @@ public class TasksFragment extends Fragment {
                     .commit();
         });
 
+        TextView tvSeeAll = view.findViewById(R.id.tvSeeAll);
+        tvSeeAll.setOnClickListener(v -> {
+            Toast.makeText(getContext(), "Button clicked!", Toast.LENGTH_SHORT).show();
+
+            requireActivity().getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, new CalendarFragment())
+                    .addToBackStack(null) // Dodajemo u back stack za navigaciju nazad
+                    .commit();
+        });
+
+
 
         recyclerView.addItemDecoration(new RecyclerView.ItemDecoration() {
             @Override
             public void getItemOffsets(@NonNull Rect outRect, @NonNull View view,
                                        @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
-                int position = parent.getChildAdapterPosition(view);
-                int itemCount = parent.getAdapter().getItemCount();
-                int spanCount = layoutManager.getSpanCount();
-
-                outRect.set(spacingInPixels, spacingInPixels, spacingInPixels, spacingInPixels);
-                outRect.bottom = extraBottomMargin;
+                int spacingInPixels = getResources().getDimensionPixelSize(R.dimen.category_item_spacing);
+                outRect.left = spacingInPixels;
+                outRect.right = spacingInPixels;
             }
         });
 
         taskTemplateService = new TaskTemplateService(getContext());
         taskInstanceService = new TaskInstanceService(getContext());
+        categoryService = new CategoryService(getContext());
 
         long today = System.currentTimeMillis();
         List<TaskInstance> todayInstances = taskInstanceService.getTasksByDateRange(today, today);
@@ -91,11 +107,14 @@ public class TasksFragment extends Fragment {
         List<TaskItemDto> tasks = new ArrayList<>();
         for (TaskInstance instance : todayInstances) {
             TaskTemplate template = templatesMap.get(instance.getTemplateId());
+            String color = categoryService.getColorById(template.getCategoryId());
             TaskItemDto dto = new TaskItemDto(
                     template.getName(),
                     template.getDescription(),
                     instance.getInstanceDate(),
-                    instance.getStatus().toString()
+                    instance.getStatus().toString(),
+                    color
+
             );
             tasks.add(dto);
         }

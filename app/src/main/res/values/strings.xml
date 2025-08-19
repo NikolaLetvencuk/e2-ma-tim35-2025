@@ -4,11 +4,4 @@
         <item>Dan</item>
         <item>Nedelja</item>
     </string-array>
-    <string-array name="category_options">
-        <item>Posao</item>
-        <item>Privatno</item>
-        <item>Škola</item>
-        <item>Zdravlje</item>
-        <item>Finansije</item>
-    </string-array>
 </resources>

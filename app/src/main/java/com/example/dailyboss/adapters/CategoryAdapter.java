@@ -36,6 +36,8 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
     public CategoryViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_category, parent, false);
+        View calendarView = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.fragment_calendar, parent, false);
         return new CategoryViewHolder(view);
     }
 

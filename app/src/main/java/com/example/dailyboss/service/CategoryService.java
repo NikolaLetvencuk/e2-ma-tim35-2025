@@ -89,4 +89,8 @@ public class CategoryService {
 
         return categoryDAO.updateColor(id, newColor);
     }
+
+    public String getColorById(String id) {
+        return categoryDAO.getColorById(id);
+    }
 }

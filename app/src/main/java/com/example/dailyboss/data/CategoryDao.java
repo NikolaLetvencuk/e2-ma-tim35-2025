@@ -91,4 +91,29 @@ public class CategoryDao {
         db.close();
         return  updated > 0;
     }
+
+    public String getColorById(String id) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        String color = null;
+
+        Cursor cursor = db.query(
+                DatabaseHelper.TABLE_CATEGORIES,
+                new String[]{DatabaseHelper.COL_COLOR},
+                DatabaseHelper.COL_ID + " = ?",
+                new String[]{id},
+                null,
+                null,
+                null
+        );
+
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                color = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_COLOR));
+            }
+            cursor.close();
+        }
+
+        db.close();
+        return color;
+    }
 }

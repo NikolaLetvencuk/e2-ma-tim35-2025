@@ -27,7 +27,7 @@ public class TaskTemplateService {
         this.taskInstanceDao = new TaskInstanceDao(context);
     }
 
-    public boolean addTaskTemplate(String categoryId, String name, String description, String executionTime, int frequencyInterval, FrequencyUnit frequencyUnit, long startDate, Long endDate, TaskDifficulty difficulty, TaskImportance importance, boolean isRecurring) {
+    public boolean addTaskTemplate(String categoryId, String name, String description, String executionTime, int frequencyInterval, FrequencyUnit frequencyUnit, long startDate, long endDate, TaskDifficulty difficulty, TaskImportance importance, boolean isRecurring) {
         String id = UUID.randomUUID().toString();
         TaskTemplate taskTemplate = new TaskTemplate(id, categoryId, name, description, executionTime, frequencyInterval, frequencyUnit, startDate, endDate, difficulty, importance, isRecurring);
 
@@ -52,7 +52,7 @@ public class TaskTemplateService {
                         break;
                 }
                 date = calendar.getTimeInMillis();
-            } while (endDate == null || date <= endDate);
+            } while (date <= endDate);
         }
         return  taskTemplateDao.insert(taskTemplate);
     }

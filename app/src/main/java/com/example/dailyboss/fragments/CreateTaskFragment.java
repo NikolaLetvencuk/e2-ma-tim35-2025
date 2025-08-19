@@ -133,7 +133,7 @@ public class CreateTaskFragment extends Fragment {
             Calendar startDateCalendar = getDateFromString(etStartDate.getText().toString());
             long startDateMillis = startDateCalendar != null ? startDateCalendar.getTimeInMillis() : 0;
 
-            Long endDateMillis = null;
+            long endDateMillis = startDateMillis;
             if (!etEndDate.getText().toString().isEmpty()) {
                 Calendar endDateCalendar = getDateFromString(etEndDate.getText().toString());
                 if (endDateCalendar != null) {
