@@ -30,7 +30,7 @@ public class DayTasksDrawable extends Drawable {
         int width = getBounds().width();
         int height = getBounds().height();
 
-        float lineHeight = 4f;
+        float lineHeight = 2f;
 
         for (TaskItemDto task : tasks) {
             int color = Color.parseColor(task.getColor());

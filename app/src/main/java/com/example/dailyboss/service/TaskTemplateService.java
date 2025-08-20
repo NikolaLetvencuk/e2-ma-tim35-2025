@@ -1,6 +1,7 @@
 package com.example.dailyboss.service;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.example.dailyboss.data.TaskInstanceDao;
 import com.example.dailyboss.data.TaskTemplateDao;
@@ -27,12 +28,36 @@ public class TaskTemplateService {
         this.taskInstanceDao = new TaskInstanceDao(context);
     }
 
+    public long combineDateAndTime(long startDate, String executionTime) {
+        // 1. Uzmemo calendar sa datumom
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(startDate);
+
+        // 2. Parsiramo vreme iz stringa "HH:mm"
+        try {
+            String[] parts = executionTime.split(":");
+            int hour = Integer.parseInt(parts[0]);
+            int minute = Integer.parseInt(parts[1]);
+
+            cal.set(Calendar.HOUR_OF_DAY, hour);
+            cal.set(Calendar.MINUTE, minute);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // 3. Vraćamo kao timestamp
+        return cal.getTimeInMillis();
+    }
+
     public boolean addTaskTemplate(String categoryId, String name, String description, String executionTime, int frequencyInterval, FrequencyUnit frequencyUnit, long startDate, long endDate, TaskDifficulty difficulty, TaskImportance importance, boolean isRecurring) {
         String id = UUID.randomUUID().toString();
         TaskTemplate taskTemplate = new TaskTemplate(id, categoryId, name, description, executionTime, frequencyInterval, frequencyUnit, startDate, endDate, difficulty, importance, isRecurring);
 
+        long combined = combineDateAndTime(startDate, executionTime);
         if (!isRecurring) {
-            TaskInstance taskInstance = new TaskInstance(UUID.randomUUID().toString(), startDate, TaskStatus.TO_DO, id);
+            TaskInstance taskInstance = new TaskInstance(UUID.randomUUID().toString(), combined, TaskStatus.TO_DO, id);
             taskInstanceDao.insert(taskInstance);
         } else {
             Calendar calendar = Calendar.getInstance();
@@ -40,7 +65,8 @@ public class TaskTemplateService {
             long date = calendar.getTimeInMillis();
 
             do {
-                TaskInstance taskInstance = new TaskInstance(UUID.randomUUID().toString(), date, TaskStatus.TO_DO, id);
+                combined = combineDateAndTime(date, executionTime);
+                TaskInstance taskInstance = new TaskInstance(UUID.randomUUID().toString(), combined, TaskStatus.TO_DO, id);
                 taskInstanceDao.insert(taskInstance);
 
                 switch (frequencyUnit) {

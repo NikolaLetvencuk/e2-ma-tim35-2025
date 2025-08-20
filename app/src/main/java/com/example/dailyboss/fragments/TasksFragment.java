@@ -116,6 +116,7 @@ public class TasksFragment extends Fragment {
                     color
 
             );
+            Log.d("TAG", "onCreateView: " + instance.getInstanceDate() + ", " + dto.getStartTime());
             tasks.add(dto);
         }
 
