@@ -15,17 +15,15 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="8dp"
-        android:background="#f0f0f0">
+        android:paddingLeft="0dp"
+        android:paddingRight="0dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:background="@drawable/day_label_background">
 
-        <ImageButton
-            android:id="@+id/btnPrevWeek"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@android:drawable/ic_media_previous"
-            android:background="?attr/selectableItemBackgroundBorderless" />
 
         <HorizontalScrollView
+            android:id="@+id/daysScrollView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -37,97 +35,94 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
-                <!-- Ovde ćeš dinamički dodavati TextView za dane, npr. Mon 18, Tue 19 ... -->
             </LinearLayout>
         </HorizontalScrollView>
 
-        <ImageButton
-            android:id="@+id/btnNextWeek"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:src="@android:drawable/ic_media_next"
-            android:background="?attr/selectableItemBackgroundBorderless" />
-    </LinearLayout>
+       </LinearLayout>
 
-    <!-- Glavni prikaz sa vremenskom skalom i danima -->
-    <HorizontalScrollView
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:scrollbars="none">
+        android:layout_height="match_parent">
 
-        <LinearLayout
-            android:id="@+id/weekContentContainer"
-            android:layout_width="wrap_content"
+        <!-- Container za dane -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="horizontal">
+            android:scrollbars="none">
 
-            <!-- Levi stub za vreme -->
-            <LinearLayout
-                android:id="@+id/timeScaleColumn"
-                android:layout_width="40dp"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
-
-                <!-- 24 sata ili po 6h intervali -->
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:text="00:00"
-                    android:textSize="12sp"
-                    android:gravity="top" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:text="04:00"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:text="08:00"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:text="12:00"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:text="16:00"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1"
-                    android:text="20:00"
-                    android:textSize="12sp" />
-
-            </LinearLayout>
-
-            <!-- Container za dane -->
             <LinearLayout
                 android:id="@+id/daysColumnsContainer"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:orientation="horizontal">
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
 
-                <!-- Ovde ćeš dodavati po LinearLayout za svaki dan -->
-                <!-- Svaki dan je Vertical LinearLayout gde se dodaju taskovi -->
-                <!-- Možeš koristiti FrameLayout unutar svakog dana da lako pozicioniraš task po Y -->
-            </LinearLayout>
+        <!-- Transparentna kolona sa satima preko -->
+        <LinearLayout
+            android:id="@+id/timeScaleColumn"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:background="@android:color/transparent"
+            android:layout_gravity="left"
+            android:visibility="gone">
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="00:00"
+                android:textSize="12sp"
+                android:textColor="@android:color/black"
+                android:gravity="top" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="04:00"
+                android:textSize="12sp"
+                android:textColor="@android:color/black"
+                android:gravity="top" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="08:00"
+                android:textSize="12sp"
+                android:textColor="@android:color/black"
+                android:gravity="top" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="12:00"
+                android:textSize="12sp"
+                android:textColor="@android:color/black"
+                android:gravity="top" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="16:00"
+                android:textSize="12sp"
+                android:textColor="@android:color/black"
+                android:gravity="top" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:text="20:00"
+                android:textSize="12sp"
+                android:textColor="@android:color/black"
+                android:gravity="top" />
         </LinearLayout>
-    </HorizontalScrollView>
+
+    </FrameLayout>
+
 
 </LinearLayout>

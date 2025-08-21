@@ -6,13 +6,20 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.GestureDetector;
+import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.HorizontalScrollView;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.applandeo.materialcalendarview.CalendarView;
@@ -25,6 +32,7 @@ import com.example.dailyboss.service.CategoryService;
 import com.example.dailyboss.service.TaskInstanceService;
 import com.example.dailyboss.service.TaskTemplateService;
 import com.example.dailyboss.utils.DayTasksDrawable;
+import com.google.android.material.card.MaterialCardView;
 
 import java.time.DayOfWeek;
 import java.time.Instant;
@@ -35,13 +43,14 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 public class CalendarFragment extends Fragment {
 
     private CalendarView calendarView;
-    private View weekCalendarRoot; // fragment_week_calendar.xml
+    private View weekCalendarRoot;
     private Button btnDay, btnWeek, btnMonth;
 
     private TaskInstanceService taskInstanceService;
@@ -52,8 +61,13 @@ public class CalendarFragment extends Fragment {
 
     private static final int PIXELS_PER_HOUR = 60;
     private static final int TASK_HEIGHT = 50;
+    private boolean isWeek = true;
 
-    private LocalDate weekStart; // trenutno prikazana nedelja
+    private GestureDetector gestureDetector;
+    private View root;
+
+    private LocalDate weekStart;
+    private LocalDate dayView;
 
     @Nullable
     @Override
@@ -61,7 +75,7 @@ public class CalendarFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
-        View root = inflater.inflate(R.layout.fragment_calendar, container, false);
+        root = inflater.inflate(R.layout.fragment_calendar, container, false);
 
         calendarView = root.findViewById(R.id.calendarView);
         btnDay = root.findViewById(R.id.btnDay);
@@ -75,27 +89,58 @@ public class CalendarFragment extends Fragment {
         loadTasks();
         setupMonthView();
 
-        // inflamo custom week layout
         weekCalendarRoot = inflater.inflate(R.layout.fragment_week_calendar, container, false);
         ((ViewGroup) root).addView(weekCalendarRoot);
         weekCalendarRoot.setVisibility(View.GONE);
 
-        // inicijalni start nedelje (ponedeljak)
         weekStart = LocalDate.now().with(DayOfWeek.MONDAY);
+        dayView = LocalDate.now();
 
-        // podešavamo strelice
-        ImageButton btnPrev = weekCalendarRoot.findViewById(R.id.btnPrevWeek);
-        ImageButton btnNext = weekCalendarRoot.findViewById(R.id.btnNextWeek);
 
-        btnPrev.setOnClickListener(v -> {
-            weekStart = weekStart.minusWeeks(1);
-            populateWeekView(weekStart);
+        gestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
+            private static final int SWIPE_THRESHOLD = 100;
+            private static final int SWIPE_VELOCITY_THRESHOLD = 100;
+
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return true; // OBAVEZNO
+            }
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                float diffX = e2.getX() - e1.getX();
+                if (Math.abs(diffX) > Math.abs(e2.getY() - e1.getY())) {
+                    if (Math.abs(diffX) > SWIPE_THRESHOLD && Math.abs(velocityX) > SWIPE_VELOCITY_THRESHOLD) {
+                        if (diffX > 0 && isWeek) {
+                            Log.d("EE", "onFling: swipe right");
+                            weekStart = weekStart.minusWeeks(1);
+                            populateWeekView(weekStart);
+                        } else if(diffX < 0 && isWeek) {
+                            Log.d("EE", "onFling: swipe left");
+                            weekStart = weekStart.plusWeeks(1);
+                            populateWeekView(weekStart);
+                        } else if(diffX > 0) {
+                            dayView = dayView.minusDays(1);
+                            populateDayView(dayView);
+                        } else {
+                            dayView = dayView.plusDays(1);
+                            populateDayView(dayView);
+                        }
+                        return true;
+                    }
+                }
+                return false;
+            }
         });
 
-        btnNext.setOnClickListener(v -> {
-            weekStart = weekStart.plusWeeks(1);
-            populateWeekView(weekStart);
+        weekCalendarRoot.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
+
+        LinearLayout daysColumnsContainer = weekCalendarRoot.findViewById(R.id.daysColumnsContainer);
+        daysColumnsContainer.setOnTouchListener((v, event) -> {
+            gestureDetector.onTouchEvent(event);
+            return false; // vrati false da bi i dalje mogao normalno da skrola
         });
+
 
         btnDay.setOnClickListener(v -> switchToDayView());
         btnWeek.setOnClickListener(v -> switchToWeekView());
@@ -107,6 +152,11 @@ public class CalendarFragment extends Fragment {
     private void populateWeekView(LocalDate startOfWeek) {
         LinearLayout daysContainer = weekCalendarRoot.findViewById(R.id.daysContainer);
         LinearLayout daysColumnsContainer = weekCalendarRoot.findViewById(R.id.daysColumnsContainer);
+        HorizontalScrollView daysScrollView = root.findViewById(R.id.daysScrollView);
+        daysScrollView.setOnTouchListener((v, event) -> {
+            gestureDetector.onTouchEvent(event);
+            return false; // false da i dalje radi normalan scroll
+        });
 
         daysContainer.removeAllViews();
         daysColumnsContainer.removeAllViews();
@@ -114,23 +164,36 @@ public class CalendarFragment extends Fragment {
         LayoutInflater inflater = LayoutInflater.from(getContext());
 
         for (int i = 0; i < 7; i++) {
-            LocalDate date = startOfWeek.plusDays(i);
-
-            // header (Mon 19)
-            TextView dayLabel = new TextView(getContext());
-            dayLabel.setText(date.getDayOfWeek().toString().substring(0, 3) + " " + date.getDayOfMonth());
-            dayLabel.setPadding(16, 8, 16, 8);
-            daysContainer.addView(dayLabel);
-
-            // kolona za taskove
             FrameLayout dayColumn = new FrameLayout(getContext());
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(200, ViewGroup.LayoutParams.MATCH_PARENT);
-            lp.setMargins(2, 2, 2, 2);
+            DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+            int screenWidth = displayMetrics.widthPixels;
+            int dayWidth = screenWidth / 7;
+
+            LocalDate date = startOfWeek.plusDays(i);
+            TextView dayLabel = (TextView) inflater.inflate(R.layout.item_day_label, daysContainer, false);
+            dayLabel.setText(date.getDayOfWeek().toString().substring(0, 3) + "\n" + date.getDayOfMonth());
+            LinearLayout.LayoutParams labelParams =
+                    new LinearLayout.LayoutParams(dayWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+            dayLabel.setLayoutParams(labelParams);
+            daysContainer.addView(dayLabel);
+            if (i < 6) {
+                View verticalDivider = new View(getContext());
+                LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(
+                        2, // širina linije
+                        ViewGroup.LayoutParams.MATCH_PARENT // ide od vrha do dna
+                );
+                verticalDivider.setLayoutParams(dividerParams);
+                verticalDivider.setBackgroundColor(Color.parseColor("#FFFFFF")); // boja linije
+                daysContainer.addView(verticalDivider);
+            }
+
+
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dayWidth, ViewGroup.LayoutParams.MATCH_PARENT);            lp.setMargins(2, 2, 2, 2);
             dayColumn.setLayoutParams(lp);
             dayColumn.setBackgroundColor(Color.parseColor("#f8f8f8"));
             daysColumnsContainer.addView(dayColumn);
 
-            // renderuj taskove za taj dan
+
             for (TaskItemDto task : tasks) {
                 LocalDate taskDate = Instant.ofEpochMilli(task.getStartTime())
                         .atZone(ZoneId.systemDefault())
@@ -160,15 +223,111 @@ public class CalendarFragment extends Fragment {
         }
     }
 
+    private void populateDayView(LocalDate date) {
+        LinearLayout daysContainer = weekCalendarRoot.findViewById(R.id.daysContainer);
+        LinearLayout daysColumnsContainer = weekCalendarRoot.findViewById(R.id.daysColumnsContainer);
+        LinearLayout timeScaleColumn = weekCalendarRoot.findViewById(R.id.timeScaleColumn);
+        HorizontalScrollView daysScrollView = root.findViewById(R.id.daysScrollView);
+        daysScrollView.setOnTouchListener((v, event) -> {
+            gestureDetector.onTouchEvent(event);
+            return false; // false da i dalje radi normalan scroll
+        });
+        daysContainer.removeAllViews();
+        daysColumnsContainer.removeAllViews();
+
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+
+        // ScrollView za vertikalni scroll
+        ScrollView verticalScrollView = new ScrollView(getContext());
+        LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.MATCH_PARENT
+        );
+        verticalScrollView.setLayoutParams(scrollParams);
+        verticalScrollView.setFillViewport(true);
+
+        // FrameLayout u ScrollView za postavljanje taskova
+        LinearLayout dayColumn = new LinearLayout(getContext());
+        dayColumn.setOrientation(LinearLayout.VERTICAL);
+        DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
+        int screenWidth = displayMetrics.widthPixels;
+        int dayWidth = screenWidth - timeScaleColumn.getWidth();
+
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dayWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMargins(2, 2, 2, 2);
+        dayColumn.setLayoutParams(lp);
+        dayColumn.setBackgroundColor(Color.parseColor("#ffffff"));
+        verticalScrollView.addView(dayColumn);
+
+        // Dodaj ScrollView u daysColumnsContainer
+        daysColumnsContainer.addView(verticalScrollView);
+
+        // Labela dana
+        TextView dayLabel = (TextView) inflater.inflate(R.layout.item_day_label, daysContainer, false);
+        dayLabel.setText(date.getDayOfWeek().toString() + "\n" + date.getDayOfMonth());
+        dayLabel.setPadding(16, 8, 16, 8);
+        dayLabel.setWidth(dayWidth);
+        dayLabel.setGravity(Gravity.CENTER);
+        daysContainer.addView(dayLabel);
+
+        // Povećanje visine skale (opciono)
+        timeScaleColumn.setMinimumHeight(24 * PIXELS_PER_HOUR); // 24h * visina po satu
+
+        // Filtriraj taskove za ovaj dan i sortiraj po startTime
+        List<TaskItemDto> dayTasks = new ArrayList<>();
+        for (TaskItemDto task : tasks) {
+            LocalDate taskDate = Instant.ofEpochMilli(task.getStartTime())
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate();
+            if (taskDate.equals(date)) dayTasks.add(task);
+        }
+        dayTasks.sort((t1, t2) -> Long.compare(t1.getStartTime(), t2.getStartTime()));
+
+        // Dodavanje taskova u FrameLayout
+        for (TaskItemDto task : dayTasks) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(task.getStartTime());
+            int hour = cal.get(Calendar.HOUR_OF_DAY);
+            int minute = cal.get(Calendar.MINUTE);
+
+            float yPos = (hour + minute / 60f) * PIXELS_PER_HOUR;
+
+            View taskView = LayoutInflater.from(getContext()).inflate(R.layout.item_task, dayColumn, false);
+
+            MaterialCardView card = taskView.findViewById(R.id.cardTask);
+            TextView tvTitle = taskView.findViewById(R.id.tvTaskTitle);
+            TextView tvDesc = taskView.findViewById(R.id.tvTaskDesc);
+            TextView tvTime = taskView.findViewById(R.id.tvTaskTime);
+
+            tvTitle.setText(task.getTitle());
+            tvDesc.setText(task.getDescription());
+            tvTime.setText(String.format(Locale.getDefault(), "%02d:%02d", hour, minute));
+
+            card.setCardBackgroundColor(Color.parseColor(task.getColor()));
+
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    400
+            );
+
+            params.setMargins(30, 20, 30, 20);
+
+            dayColumn.addView(taskView, params);
+        }
+    }
+
     private void switchToDayView() {
         calendarView.setVisibility(View.GONE);
-        weekCalendarRoot.setVisibility(View.GONE);
+        weekCalendarRoot.setVisibility(View.VISIBLE);
+        populateDayView(dayView);
+        isWeek = false;
     }
 
     private void switchToWeekView() {
         calendarView.setVisibility(View.GONE);
         weekCalendarRoot.setVisibility(View.VISIBLE);
         populateWeekView(weekStart);
+        isWeek = true;
     }
 
     private void switchToMonthView() {
