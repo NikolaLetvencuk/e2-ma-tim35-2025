@@ -86,8 +86,15 @@ public class CalendarFragment extends Fragment {
         taskInstanceService = new TaskInstanceService(getContext());
         categoryService = new CategoryService(getContext());
 
-        loadTasks();
+        LocalDate firstDayOfMonth = LocalDate.now().withDayOfMonth(1);
+        LocalDate lastDayOfMonth = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
+
+        long startMillis = firstDayOfMonth.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        long endMillis = lastDayOfMonth.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+
+        loadTasks(startMillis, endMillis);
         setupMonthView();
+
 
         weekCalendarRoot = inflater.inflate(R.layout.fragment_week_calendar, container, false);
         ((ViewGroup) root).addView(weekCalendarRoot);
@@ -96,6 +103,13 @@ public class CalendarFragment extends Fragment {
         weekStart = LocalDate.now().with(DayOfWeek.MONDAY);
         dayView = LocalDate.now();
 
+        calendarView.setOnForwardPageChangeListener(() -> {
+            updateTasksForCurrentMonth();
+        });
+
+        calendarView.setOnPreviousPageChangeListener(() -> {
+            updateTasksForCurrentMonth();
+        });
 
         gestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
             private static final int SWIPE_THRESHOLD = 100;
@@ -150,7 +164,16 @@ public class CalendarFragment extends Fragment {
     }
 
     private void populateWeekView(LocalDate startOfWeek) {
-        LinearLayout daysContainer = weekCalendarRoot.findViewById(R.id.daysContainer);
+        LocalDate endOfWeek = startOfWeek.plusDays(6);
+
+        long startMillis = startOfWeek.atStartOfDay(ZoneId.systemDefault())
+                .toInstant().toEpochMilli();
+
+        long endMillis = endOfWeek.atTime(23, 59, 59)
+                .atZone(ZoneId.systemDefault())
+                .toInstant().toEpochMilli();
+
+        loadTasks(startMillis, endMillis);        LinearLayout daysContainer = weekCalendarRoot.findViewById(R.id.daysContainer);
         LinearLayout daysColumnsContainer = weekCalendarRoot.findViewById(R.id.daysColumnsContainer);
         HorizontalScrollView daysScrollView = root.findViewById(R.id.daysScrollView);
         daysScrollView.setOnTouchListener((v, event) -> {
@@ -224,6 +247,7 @@ public class CalendarFragment extends Fragment {
     }
 
     private void populateDayView(LocalDate date) {
+        loadTasks(date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli(), date.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
         LinearLayout daysContainer = weekCalendarRoot.findViewById(R.id.daysContainer);
         LinearLayout daysColumnsContainer = weekCalendarRoot.findViewById(R.id.daysColumnsContainer);
         LinearLayout timeScaleColumn = weekCalendarRoot.findViewById(R.id.timeScaleColumn);
@@ -335,9 +359,9 @@ public class CalendarFragment extends Fragment {
         weekCalendarRoot.setVisibility(View.GONE);
     }
 
-    private void loadTasks() {
-        long today = System.currentTimeMillis();
-        long thirtyDaysLater = today + 30L * 24 * 60 * 60 * 1000;
+    private void loadTasks(long startDate, long endDate) {
+        long today = startDate;
+        long thirtyDaysLater = endDate;
         List<TaskInstance> instances = taskInstanceService.getTasksByDateRange(today, thirtyDaysLater);
 
         Set<String> templateIds = new HashSet<>();
@@ -386,5 +410,28 @@ public class CalendarFragment extends Fragment {
         }
 
         calendarView.setEvents(events);
+    }
+
+    private void updateTasksForCurrentMonth() {
+        Calendar currentPageDate = calendarView.getCurrentPageDate();
+
+        LocalDate firstDay = LocalDate.of(
+                currentPageDate.get(Calendar.YEAR),
+                currentPageDate.get(Calendar.MONTH) + 1,
+                1
+        );
+        LocalDate lastDay = firstDay.withDayOfMonth(firstDay.lengthOfMonth());
+
+        long firstDayMillis = firstDay.atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli();
+
+        long lastDayMillis = lastDay.atTime(23, 59, 59)
+                .atZone(ZoneId.systemDefault())
+                .toInstant()
+                .toEpochMilli();
+
+        loadTasks(firstDayMillis, lastDayMillis);
+        setupMonthView();
     }
 }
