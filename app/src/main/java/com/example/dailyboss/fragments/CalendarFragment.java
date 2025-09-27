@@ -25,6 +25,7 @@ import android.widget.TextView;
 import com.applandeo.materialcalendarview.CalendarView;
 import com.applandeo.materialcalendarview.EventDay;
 import com.example.dailyboss.R;
+import com.example.dailyboss.adapters.TaskCalendarAdapter;
 import com.example.dailyboss.dto.TaskItemDto;
 import com.example.dailyboss.model.TaskInstance;
 import com.example.dailyboss.model.TaskTemplate;
@@ -117,7 +118,7 @@ public class CalendarFragment extends Fragment {
 
             @Override
             public boolean onDown(MotionEvent e) {
-                return true; // OBAVEZNO
+                return true;
             }
 
             @Override
@@ -159,6 +160,38 @@ public class CalendarFragment extends Fragment {
         btnDay.setOnClickListener(v -> switchToDayView());
         btnWeek.setOnClickListener(v -> switchToWeekView());
         btnMonth.setOnClickListener(v -> switchToMonthView());
+
+        TaskCalendarAdapter adapter = new TaskCalendarAdapter(getContext(), tasks);
+        LinearLayout daysContainer = weekCalendarRoot.findViewById(R.id.daysContainer);
+        LinearLayout timeScaleColumn = weekCalendarRoot.findViewById(R.id.timeScaleColumn);
+
+        adapter.setOnDateChangeListener(new TaskCalendarAdapter.OnDateChangeListener() {
+            @Override
+            public void onNextDay() {
+                dayView = dayView.plusDays(1);
+                adapter.populateDayView(dayView, daysContainer, daysColumnsContainer, timeScaleColumn);
+            }
+
+            @Override
+            public void onPreviousDay() {
+                dayView = dayView.minusDays(1);
+                adapter.populateDayView(dayView, daysContainer, daysColumnsContainer, timeScaleColumn);
+            }
+
+            @Override
+            public void onNextWeek() {
+                weekStart = weekStart.plusWeeks(1);
+                adapter.populateWeekView(weekStart, daysContainer, daysColumnsContainer);
+            }
+
+            @Override
+            public void onPreviousWeek() {
+                weekStart = weekStart.minusWeeks(1);
+                adapter.populateWeekView(weekStart, daysContainer, daysColumnsContainer);
+            }
+        });
+        adapter.setupSwipeGestures(daysColumnsContainer, isWeek);
+
 
         return root;
     }
