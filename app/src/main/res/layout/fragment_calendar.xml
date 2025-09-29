@@ -5,48 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Toolbar sa back i profil -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/white"
-        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
 
-        <ImageButton
-            android:id="@+id/btnBack"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:src="@drawable/ic_arrow_back"
-            android:contentDescription="Nazad"
-            android:background="@null"
-            android:padding="0dp"/>
-
-
-        <ImageButton
-            android:id="@+id/btnProfile"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:layout_gravity="end|center_vertical"
-            android:padding="4dp"
-            android:layout_marginRight="10dp"
-            android:scaleType="fitCenter"
-            android:background="@null"
-            android:src="@drawable/ic_profile"
-            android:contentDescription="Profil" />
-
-    </androidx.appcompat.widget.Toolbar>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <ToggleButton
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-    </LinearLayout>
 
     <!-- Day / Week / Month Toolbar -->
     <LinearLayout
@@ -81,7 +40,8 @@
     <com.applandeo.materialcalendarview.CalendarView
         android:id="@+id/calendarView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        app:headerColor="#333333"/>
 
     <!-- Dodaj ispod MonthView u tvom layout-u -->
     <com.kizitonwose.calendar.view.WeekCalendarView

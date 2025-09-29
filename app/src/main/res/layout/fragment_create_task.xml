@@ -11,7 +11,7 @@
         android:layout_height="?attr/actionBarSize"
         app:navigationIcon="@drawable/ic_arrow_back"
         app:title="Novi Zadatak"
-        android:background="?attr/colorPrimary"
+        android:background="@color/calendar_black"
         app:titleTextColor="@android:color/white"
         app:navigationIconTint="@android:color/white"
         android:elevation="4dp"
@@ -316,17 +316,9 @@
                 android:layout_marginTop="16dp"
                 app:layout_constraintTop_toBottomOf="@id/spinnerCategory"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                app:layout_constraintEnd_toEndOf="parent"
+                android:backgroundTint="@color/calendar_black"/>
 
-            <Button
-                android:id="@+id/btnBack"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Create Task2"
-                android:layout_marginTop="16dp"
-                app:layout_constraintTop_toBottomOf="@id/btnCreateTask"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>

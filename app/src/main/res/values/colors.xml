@@ -9,4 +9,5 @@
     <color name="important">#2196F3</color>
     <color name="extreme">#9C27B0</color>
     <color name="special">#9C27B0</color>
+    <color name="calendar_black">#333333</color>
 </resources>

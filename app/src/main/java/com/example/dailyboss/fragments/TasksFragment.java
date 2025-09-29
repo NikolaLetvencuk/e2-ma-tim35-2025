@@ -1,14 +1,11 @@
-// TasksFragment.java
 package com.example.dailyboss.fragments;
 
-import android.content.Intent;
-import android.graphics.Rect;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,112 +14,116 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.navigation.Navigation;
-import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.dailyboss.R;
-import com.example.dailyboss.adapters.TaskAdapter;
-import com.example.dailyboss.dto.TaskItemDto;
-import com.example.dailyboss.model.Category;
-import com.example.dailyboss.model.TaskInstance;
-import com.example.dailyboss.model.TaskTemplate;
-import com.example.dailyboss.service.CategoryService;
-import com.example.dailyboss.service.TaskInstanceService;
-import com.example.dailyboss.service.TaskTemplateService;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+// Pretpostavimo da će TasksFragment služiti kao kontejner i kontrolisati prebacivanje.
+// CalendarFragment već postoji.
+// Morate obezbediti drugi fragment (npr. TaskListContentFragment) za prikaz liste.
+// Za demonstraciju, koristiću TaskListFragment za listu.
+// Ako nemate TaskListFragment, moraćete da ga kreirate.
 
 public class TasksFragment extends Fragment {
 
-    private TaskInstanceService taskInstanceService;
-    private TaskTemplateService taskTemplateService;
-    private CategoryService categoryService;
-    private TaskAdapter adapter;
+    // Koristimo ovu varijablu za praćenje trenutnog prikaza
+    private boolean isCalendarView = false;
+
+    // Potrebna su nam oba fragmenta za prebacivanje
+    private Fragment calendarFragment;
+    private Fragment listFragment; // Ovo bi trebalo da bude fragment sa RecyclerView-om
+
+    // Novo: Dodajemo reference na nova dugmad
+    // Ažurirano: Sada su obični Buttoni (ne ImageButton)
+    private Button btnCalendarView;
+    private Button btnListView;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.activity_task, container, false);
 
-        RecyclerView recyclerView = view.findViewById(R.id.rvTasks1);
+        calendarFragment = new CalendarFragment();
+        listFragment = new TaskListFragment();
 
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false);
-        recyclerView.setLayoutManager(layoutManager);
 
-        int spacingInPixels = getResources().getDimensionPixelSize(R.dimen.category_item_spacing);
-        int extraBottomMargin = 100;
+        // NOVO: Inicijalizacija novih dugmadi kao Button
+        btnCalendarView = view.findViewById(R.id.btnCalendarView);
+        btnListView = view.findViewById(R.id.btnListView);
 
+        // Postavljanje početnog prikaza (npr. Lista)
+        if (savedInstanceState == null) {
+            loadFragment(listFragment);
+            updateButtonState(false); // false označava Lista je aktivna
+        }
+
+        // 1. Logika za Calendar dugme
+        btnCalendarView.setOnClickListener(v -> {
+            loadFragment(calendarFragment);
+            updateButtonState(true); // true označava Kalendar je aktivan
+        });
+
+        // 2. Logika za Listu dugme
+        btnListView.setOnClickListener(v -> {
+            loadFragment(listFragment);
+            updateButtonState(false); // false označava Lista je aktivna
+        });
+
+
+        // 3. Logika za "+ Add Task" dugme
         Button btnNewTask = view.findViewById(R.id.btnNewTask);
-        btnNewTask.setOnClickListener(v -> {
-            Toast.makeText(getContext(), "Button clicked!", Toast.LENGTH_SHORT).show();
 
-            requireActivity().getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new CreateTaskFragment())
-                    .addToBackStack(null) // Dodajemo u back stack za navigaciju nazad
-                    .commit();
-        });
-
-        TextView tvSeeAll = view.findViewById(R.id.tvSeeAll);
-        tvSeeAll.setOnClickListener(v -> {
-            Toast.makeText(getContext(), "Button clicked!", Toast.LENGTH_SHORT).show();
-
-            requireActivity().getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new CalendarFragment())
-                    .addToBackStack(null) // Dodajemo u back stack za navigaciju nazad
-                    .commit();
-        });
-
-
-
-        recyclerView.addItemDecoration(new RecyclerView.ItemDecoration() {
-            @Override
-            public void getItemOffsets(@NonNull Rect outRect, @NonNull View view,
-                                       @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
-                int spacingInPixels = getResources().getDimensionPixelSize(R.dimen.category_item_spacing);
-                outRect.left = spacingInPixels;
-                outRect.right = spacingInPixels;
-            }
-        });
-
-        taskTemplateService = new TaskTemplateService(getContext());
-        taskInstanceService = new TaskInstanceService(getContext());
-        categoryService = new CategoryService(getContext());
-
-        long today = System.currentTimeMillis();
-        List<TaskInstance> todayInstances = taskInstanceService.getTasksByDateRange(today, today);
-
-        Set<String> templateIds = new HashSet<>();
-        for (TaskInstance instance : todayInstances) {
-            templateIds.add(instance.getTemplateId());
+        if (btnNewTask != null) {
+            btnNewTask.setOnClickListener(v -> {
+                requireActivity().getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, new CreateTaskFragment())
+                        .addToBackStack(null) // Dodaje transakciju na back stack
+                        .commit();
+            });
         }
 
-        Map<String, TaskTemplate> templatesMap = taskTemplateService.getTemplatesByIds(templateIds);
-
-        List<TaskItemDto> tasks = new ArrayList<>();
-        for (TaskInstance instance : todayInstances) {
-            TaskTemplate template = templatesMap.get(instance.getTemplateId());
-            String color = categoryService.getColorById(template.getCategoryId());
-            TaskItemDto dto = new TaskItemDto(
-                    template.getName(),
-                    template.getDescription(),
-                    instance.getInstanceDate(),
-                    instance.getStatus().toString(),
-                    color
-
-            );
-            Log.d("TAG", "onCreateView: " + instance.getInstanceDate() + ", " + dto.getStartTime());
-            tasks.add(dto);
-        }
-
-        adapter = new TaskAdapter(tasks);
-        recyclerView.setAdapter(adapter);
+        // 4. Logika za "Back" dugme (ostaje nepromenjena, ali je dugme sakriveno u XML-u)
+        // ImageButton btnBack = view.findViewById(R.id.btnBack);
+        // btnBack.setOnClickListener(v -> { ... });
 
         return view;
+    }
+
+    // ---
+
+    /**
+     * Učitava dati fragment u fragment_container.
+     */
+    private void loadFragment(Fragment fragment) {
+        getChildFragmentManager().beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .commit();
+
+        if (fragment instanceof CalendarFragment) {
+            Toast.makeText(getContext(), "Prikaz Kalendara", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(getContext(), "Prikaz Liste", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Vizuelno ažurira dugmad (List/Calendar) da bi se signalizirao aktivni prikaz.
+     */
+    private void updateButtonState(boolean isCalendarActive) {
+        // Koristite boje iz vašeg Color resursa ili direktno Android boje
+        int activeColor = getResources().getColor(R.color.calendar_black); // 🚨 Definišite u colors.xml
+        int inactiveColor = getResources().getColor(android.R.color.darker_gray);
+
+        // Simetrično postavljanje stanja
+        if (isCalendarActive) {
+            btnCalendarView.setTextColor(activeColor);
+            btnListView.setTextColor(inactiveColor);
+
+        } else {
+            btnCalendarView.setTextColor(inactiveColor);
+            btnListView.setTextColor(activeColor);
+        }
+
+        // Možete dodati i logiku za podvlačenje (border bottom)
+        // ili promenu boje pozadine (background) da bi izgledalo vernije tab-u.
     }
 }
