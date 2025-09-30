@@ -1,9 +1,9 @@
 package com.example.dailyboss.enums;
 
 public enum TaskStatus {
-    TO_DO,
+    UNDONE,
     ACTIVE,
     DONE,
-    CANCELED,
+    CANCELLED,
     PAUSED
 }

@@ -10,4 +10,9 @@
     <color name="extreme">#9C27B0</color>
     <color name="special">#9C27B0</color>
     <color name="calendar_black">#333333</color>
+    <color name="red">#F44336</color>
+    <color name="green">#4CAF50</color>
+    <color name="blue">#2196F3</color>
+    <color name="yellow2">#FFC107</color>
+    <color name="disabled_text_grey">#777777</color>
 </resources>

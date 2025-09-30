@@ -26,7 +26,6 @@ public class CategoryDao {
         android.util.Log.d("CategoryService",
                 "Dodajem kategoriju: ID=" + category.getId() + ", Name=" + category.getName() + ", Color=" + category.getColor() + values);
         long result = db.insert(DatabaseHelper.TABLE_CATEGORIES, null, values);
-        db.close();
         return  result != -1;
     }
 
@@ -46,7 +45,6 @@ public class CategoryDao {
             } while (cursor.moveToNext());
         }
         cursor.close();
-        db.close();
         return  list;
     }
 
@@ -61,7 +59,6 @@ public class CategoryDao {
         boolean exists = cursor.moveToFirst();
 
         cursor.close();
-        db.close();
         return exists;
     }
 
@@ -77,7 +74,6 @@ public class CategoryDao {
         }
 
         cursor.close();
-        db.close();
         return colors;
     }
 
@@ -88,7 +84,6 @@ public class CategoryDao {
 
         int updated = db.update(DatabaseHelper.TABLE_CATEGORIES, values,
                 DatabaseHelper.COL_ID + " = ?", new String[]{id});
-        db.close();
         return  updated > 0;
     }
 
@@ -112,8 +107,6 @@ public class CategoryDao {
             }
             cursor.close();
         }
-
-        db.close();
         return color;
     }
 }

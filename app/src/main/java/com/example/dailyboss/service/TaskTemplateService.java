@@ -1,7 +1,6 @@
 package com.example.dailyboss.service;
 
 import android.content.Context;
-import android.util.Log;
 
 import com.example.dailyboss.data.TaskInstanceDao;
 import com.example.dailyboss.data.TaskTemplateDao;
@@ -29,11 +28,9 @@ public class TaskTemplateService {
     }
 
     public long combineDateAndTime(long startDate, String executionTime) {
-        // 1. Uzmemo calendar sa datumom
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(startDate);
 
-        // 2. Parsiramo vreme iz stringa "HH:mm"
         try {
             String[] parts = executionTime.split(":");
             int hour = Integer.parseInt(parts[0]);
@@ -47,7 +44,6 @@ public class TaskTemplateService {
             e.printStackTrace();
         }
 
-        // 3. Vraćamo kao timestamp
         return cal.getTimeInMillis();
     }
 
@@ -57,7 +53,7 @@ public class TaskTemplateService {
 
         long combined = combineDateAndTime(startDate, executionTime);
         if (!isRecurring) {
-            TaskInstance taskInstance = new TaskInstance(UUID.randomUUID().toString(), combined, TaskStatus.TO_DO, id);
+            TaskInstance taskInstance = new TaskInstance(UUID.randomUUID().toString(), combined, TaskStatus.ACTIVE, id);
             taskInstanceDao.insert(taskInstance);
         } else {
             Calendar calendar = Calendar.getInstance();
@@ -66,7 +62,7 @@ public class TaskTemplateService {
 
             do {
                 combined = combineDateAndTime(date, executionTime);
-                TaskInstance taskInstance = new TaskInstance(UUID.randomUUID().toString(), combined, TaskStatus.TO_DO, id);
+                TaskInstance taskInstance = new TaskInstance(UUID.randomUUID().toString(), combined, TaskStatus.ACTIVE, id);
                 taskInstanceDao.insert(taskInstance);
 
                 switch (frequencyUnit) {
@@ -81,6 +77,67 @@ public class TaskTemplateService {
             } while (date <= endDate);
         }
         return  taskTemplateDao.insert(taskTemplate);
+    }
+
+    public boolean updateTaskTemplate(
+            String templateId,
+            String categoryId,
+            String name,
+            String description,
+            String executionTime,
+            int frequencyInterval,
+            FrequencyUnit frequencyUnit,
+            long startDate,
+            long endDate,
+            TaskDifficulty difficulty,
+            TaskImportance importance,
+            boolean isRecurring) {
+
+        TaskTemplate taskTemplate = new TaskTemplate(
+                templateId,
+                categoryId,
+                name,
+                description,
+                executionTime,
+                frequencyInterval,
+                frequencyUnit,
+                startDate,
+                endDate,
+                difficulty,
+                importance,
+                isRecurring
+        );
+        String newTemplateId = UUID.randomUUID().toString();
+        taskTemplate.setTemplateId(newTemplateId);
+        boolean templateSuccess = taskTemplateDao.insert(taskTemplate);
+
+        Calendar today = Calendar.getInstance();
+        today.set(Calendar.HOUR_OF_DAY, 0);
+        today.set(Calendar.MINUTE, 0);
+        today.set(Calendar.SECOND, 0);
+        today.set(Calendar.MILLISECOND, 0);
+        long todayMillis = today.getTimeInMillis();
+
+        List<TaskInstance> futureInstances = taskInstanceDao.getFutureActiveInstances(templateId, todayMillis);
+
+        if (futureInstances != null && !futureInstances.isEmpty()) {
+            for (TaskInstance instance : futureInstances) {
+                instance.setTemplateId(newTemplateId);
+                Calendar instanceCal = Calendar.getInstance();
+                instanceCal.setTimeInMillis(instance.getInstanceDate());
+                instanceCal.set(Calendar.HOUR_OF_DAY, 0);
+                instanceCal.set(Calendar.MINUTE, 0);
+                instanceCal.set(Calendar.SECOND, 0);
+                instanceCal.set(Calendar.MILLISECOND, 0);
+                long dateOnlyMillis = instanceCal.getTimeInMillis();
+                long newCombinedTime = combineDateAndTime(dateOnlyMillis, executionTime);
+
+                instance.setInstanceDate(newCombinedTime);
+
+                taskInstanceDao.update(instance);
+            }
+        }
+        return templateSuccess;
     }
 
     public List<TaskTemplate> getAllTaskTemplates() {

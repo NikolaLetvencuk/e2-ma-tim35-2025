@@ -6,7 +6,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -56,7 +55,7 @@ public class TaskListFragment extends Fragment {
         btnRepeatingTasks = view.findViewById(R.id.btnRepeatingTasks);
 
         rvAllTasks.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new TaskAdapter(new ArrayList<>()); // Inicijalizacija sa praznom listom
+        adapter = new TaskAdapter(new ArrayList<>());
         rvAllTasks.setAdapter(adapter);
 
         taskTemplateService = new TaskTemplateService(getContext());
@@ -72,22 +71,19 @@ public class TaskListFragment extends Fragment {
     }
 
     private void loadAllTasks() {
-        // Učitavanje svih task instanci
         List<TaskInstance> allInstances = taskInstanceService.getAllTaskInstances();
 
-        // Učitavanje svih template-a (za naziv, opis, i categoryId)
         List<TaskTemplate> allTemplates = taskTemplateService.getAllTaskTemplates();
         Map<String, TaskTemplate> templatesMap = allTemplates.stream()
                 .collect(Collectors.toMap(TaskTemplate::getTemplateId, template -> template));
 
         allTasks.clear();
 
-        long now = System.currentTimeMillis(); // trenutni timestamp
+        long now = System.currentTimeMillis();
 
         for (TaskInstance instance : allInstances) {
             TaskTemplate template = templatesMap.get(instance.getTemplateId());
             if (template != null) {
-                // Provera: datum taska je sada ili u budućnosti, i status je aktivan
                 if (instance.getInstanceDate() >= now || instance.getStatus() == TaskStatus.ACTIVE) {
 
                     String color = categoryService.getColorById(template.getCategoryId());
@@ -105,21 +101,28 @@ public class TaskListFragment extends Fragment {
             }
         }
 
-        adapter = new TaskAdapter(this.getContext(), allTasks, task -> {
-            Toast.makeText(getContext(), "Task Clicked: " + task.getTitle(), Toast.LENGTH_SHORT).show();
+        adapter = new TaskAdapter(requireContext(), allTasks, task -> {
+            Bundle bundle = new Bundle();
+            bundle.putString("TASK_INSTANCE_ID", task.getInstanceId());
+
+            TaskDetailFragment detailFragment = new TaskDetailFragment();
+            detailFragment.setArguments(bundle);
+
+            requireActivity().getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, detailFragment)
+                    .addToBackStack(null)
+                    .commit();
         });
         rvAllTasks.setAdapter(adapter);
     }
 
     private void filterTasks(boolean isRepeatingClicked) {
-        // Toggle stanje
         if (isRepeatingClicked) {
             repeating = !repeating;
         } else {
             oneTime = !oneTime;
         }
 
-        // Filtriraj na osnovu trenutnog stanja
         List<TaskItemDto> filteredList = allTasks.stream()
                 .filter(task -> {
                     if (task.isRepeating() && repeating) return true;
@@ -128,13 +131,21 @@ public class TaskListFragment extends Fragment {
                 })
                 .collect(Collectors.toList());
 
-        // Ako su oba true, prikazi sve
         if (repeating && oneTime) {
             filteredList = new ArrayList<>(allTasks);
         }
 
-        adapter = new TaskAdapter(this.getContext(), filteredList, task -> {
-            Toast.makeText(getContext(), "Task Clicked: " + task.getTitle(), Toast.LENGTH_SHORT).show();
+        adapter = new TaskAdapter(requireContext(), filteredList, task -> {
+            Bundle bundle = new Bundle();
+            bundle.putString("TASK_INSTANCE_ID", task.getInstanceId());
+
+            TaskDetailFragment detailFragment = new TaskDetailFragment();
+            detailFragment.setArguments(bundle);
+
+            requireActivity().getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, detailFragment)
+                    .addToBackStack(null)
+                    .commit();
         });
         rvAllTasks.setAdapter(adapter);
 
@@ -142,17 +153,13 @@ public class TaskListFragment extends Fragment {
     }
 
     private void updateButtonsState() {
-        // Direktno koristi R.color umesto getColor()
         int activeTextColor = getResources().getColor(R.color.white);
         int inactiveTextColor = getResources().getColor(R.color.white);
 
-        // Aktivna boja (npr. crna pozadina)
         ColorStateList activeTint = ContextCompat.getColorStateList(getContext(), R.color.calendar_black);
 
-        // Neaktivna boja (npr. siva pozadina)
         ColorStateList inactiveTint = ContextCompat.getColorStateList(getContext(), android.R.color.darker_gray);
 
-        // One-Time dugme
         if (oneTime) {
             btnOneTimeTasks.setBackgroundTintList(activeTint);
             btnOneTimeTasks.setTextColor(activeTextColor);
@@ -161,7 +168,6 @@ public class TaskListFragment extends Fragment {
             btnOneTimeTasks.setTextColor(inactiveTextColor);
         }
 
-        // Repeating dugme
         if (repeating) {
             btnRepeatingTasks.setBackgroundTintList(activeTint);
             btnRepeatingTasks.setTextColor(activeTextColor);

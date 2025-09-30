@@ -36,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container, new TasksFragment())
                         .commit();
+                return true;
             }
             return false;
         });

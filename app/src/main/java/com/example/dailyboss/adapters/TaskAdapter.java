@@ -1,10 +1,8 @@
 package com.example.dailyboss.adapters;
 
-import static android.content.ContentValues.TAG;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,7 +11,6 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.dailyboss.R;
@@ -22,7 +19,6 @@ import com.example.dailyboss.dto.TaskItemDto;
 import com.example.dailyboss.enums.TaskStatus;
 import com.example.dailyboss.model.TaskInstance;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -81,7 +77,7 @@ public class TaskAdapter extends RecyclerView.Adapter<TaskAdapter.TaskViewHolder
                     taskInstance.setStatus(TaskStatus.DONE);
                 } else if (id == R.id.action_cancelled) {
                     task.setStatus("Canceled");
-                    taskInstance.setStatus(TaskStatus.CANCELED);
+                    taskInstance.setStatus(TaskStatus.CANCELLED);
                 } else if (id == R.id.action_paused) {
                     task.setStatus("Paused");
                     taskInstance.setStatus(TaskStatus.PAUSED);

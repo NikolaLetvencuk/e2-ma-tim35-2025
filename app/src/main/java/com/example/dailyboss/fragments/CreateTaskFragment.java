@@ -17,6 +17,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
 
+import com.example.dailyboss.dto.TaskDetailDto;
 import com.example.dailyboss.enums.FrequencyUnit;
 import com.example.dailyboss.enums.TaskDifficulty;
 import com.example.dailyboss.enums.TaskImportance;
@@ -44,6 +45,21 @@ public class CreateTaskFragment extends Fragment {
     private CategoryService categoryService;
     private TaskTemplateService taskTemplateService;
 
+    private static final String ARG_TASK_TEMPLATE = "task_template";
+    private TaskDetailDto taskToEdit = null;
+
+    public static CreateTaskFragment newInstance(TaskDetailDto taskDetailDto) {
+        CreateTaskFragment fragment = new CreateTaskFragment();
+        Bundle args = new Bundle();
+        args.putSerializable(ARG_TASK_TEMPLATE, taskDetailDto);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public static CreateTaskFragment newInstance() {
+        return new CreateTaskFragment();
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -51,6 +67,10 @@ public class CreateTaskFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         categoryService = new CategoryService(getContext());
         taskTemplateService = new TaskTemplateService(getContext());
+
+        if (getArguments() != null && getArguments().containsKey(ARG_TASK_TEMPLATE)) {
+            taskToEdit = (TaskDetailDto) getArguments().getSerializable(ARG_TASK_TEMPLATE);
+        }
         return inflater.inflate(R.layout.fragment_create_task, container, false);
     }
 
@@ -58,6 +78,7 @@ public class CreateTaskFragment extends Fragment {
     public void onViewCreated(@NonNull View view,
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
         spinnerCategory = view.findViewById(R.id.spinnerCategory);
         populateCategorySpinner();
 
@@ -76,6 +97,58 @@ public class CreateTaskFragment extends Fragment {
         RadioGroup radioGroupImportance = view.findViewById(R.id.radioGroupImportance);
 
         calendar = Calendar.getInstance();
+
+       if (taskToEdit != null) {
+            toolbar.setTitle("Izmeni Zadatak");
+            btnCreateTask.setText("Sačuvaj izmene");
+
+            etTaskTitle.setText(taskToEdit.getName());
+            etTaskDescription.setText(taskToEdit.getDescription());
+            etStartTime.setText(taskToEdit.getExecutionTime());
+
+            String startDateStr = formatDate(taskToEdit.getStartDate());
+            etStartDate.setText(startDateStr);
+
+            checkBoxIsRepeated.setChecked(taskToEdit.isRecurring());
+            if (taskToEdit.isRecurring()) {
+                layoutRepeatOptions.setVisibility(View.VISIBLE);
+
+                if (taskToEdit.getEndDate() > 0) {
+                    String endDateStr = formatDate(taskToEdit.getEndDate());
+                    etEndDate.setText(endDateStr);
+                }
+
+                etRepeatInterval.setText(String.valueOf(taskToEdit.getFrequencyInterval()));
+
+                if (taskToEdit.getFrequencyUnit() == FrequencyUnit.WEEK) {
+                    ((RadioButton) view.findViewById(R.id.radioWeek)).setChecked(true);
+                } else {
+                    ((RadioButton) view.findViewById(R.id.radioDay)).setChecked(true);
+                }
+            }
+
+            setRadioGroupSelection(radioGroupDifficulty, taskToEdit.getDifficulty());
+            setRadioGroupSelection(radioGroupImportance, taskToEdit.getImportance());
+            setSelectedCategory(taskToEdit.getCategoryId());
+
+            spinnerCategory.setEnabled(false);
+            spinnerCategory.setClickable(false);
+
+            etStartDate.setEnabled(false);
+            etEndDate.setEnabled(false);
+
+            checkBoxIsRepeated.setEnabled(false);
+
+            if (taskToEdit.isRecurring()) {
+                etRepeatInterval.setEnabled(false);
+                for (int i = 0; i < etRepeatUnit.getChildCount(); i++) {
+                    etRepeatUnit.getChildAt(i).setEnabled(false);
+                }
+            }
+        } else {
+            toolbar.setTitle("Novi Zadatak");
+            btnCreateTask.setText("Kreiraj Zadatak");
+        }
 
         etStartDate.setOnClickListener(v -> {
             Calendar maxDate = null;
@@ -109,7 +182,6 @@ public class CreateTaskFragment extends Fragment {
 
         btnCreateTask.setOnClickListener(v -> {
             Category selectedCategory = (Category) spinnerCategory.getSelectedItem();
-
             String title = etTaskTitle.getText().toString();
             String description = etTaskDescription.getText().toString();
             String executionTime = etStartTime.getText().toString();
@@ -121,19 +193,12 @@ public class CreateTaskFragment extends Fragment {
                 frequencyInterval = 1;
             }
 
-            int selectedUnitId = etRepeatUnit.getCheckedRadioButtonId();
-            FrequencyUnit frequencyUnit = FrequencyUnit.DAY; // default
-            if (selectedUnitId != -1) {
-                RadioButton rb = etRepeatUnit.findViewById(selectedUnitId);
-                String text = rb.getText().toString().toLowerCase();
-                if (text.contains("day")) frequencyUnit = FrequencyUnit.DAY;
-                else if (text.contains("week")) frequencyUnit = FrequencyUnit.WEEK;
-            }
+            FrequencyUnit frequencyUnit = getSelectedFrequencyUnit(etRepeatUnit);
 
             Calendar startDateCalendar = getDateFromString(etStartDate.getText().toString());
             long startDateMillis = startDateCalendar != null ? startDateCalendar.getTimeInMillis() : 0;
 
-            long endDateMillis = startDateMillis;
+            long endDateMillis = 0;
             if (!etEndDate.getText().toString().isEmpty()) {
                 Calendar endDateCalendar = getDateFromString(etEndDate.getText().toString());
                 if (endDateCalendar != null) {
@@ -141,50 +206,136 @@ public class CreateTaskFragment extends Fragment {
                 }
             }
 
-            int selectedDifficultyId = radioGroupDifficulty.getCheckedRadioButtonId();
-            TaskDifficulty difficulty = TaskDifficulty.EASY;
-            if (selectedDifficultyId != -1) {
-                RadioButton rb = radioGroupDifficulty.findViewById(selectedDifficultyId);
-                String text = rb.getText().toString().toLowerCase();
-                if (text.contains("veoma")) difficulty = TaskDifficulty.VERY_EASY;
-                else if (text.contains("lak")) difficulty = TaskDifficulty.EASY;
-                else if (text.contains("težak") && !text.contains("ekstremno")) difficulty = TaskDifficulty.HARD;
-                else if (text.contains("ekstremno")) difficulty = TaskDifficulty.EXTREME;
-            }
+            TaskDifficulty difficulty = getSelectedDifficulty(radioGroupDifficulty);
+            TaskImportance importance = getSelectedImportance(radioGroupImportance);
 
-            int selectedImportanceId = radioGroupImportance.getCheckedRadioButtonId();
-            TaskImportance importance = TaskImportance.NORMAL;
-            if (selectedImportanceId != -1) {
-                RadioButton rb = radioGroupImportance.findViewById(selectedImportanceId);
-                String text = rb.getText().toString().toLowerCase();
-                if (text.contains("normalan")) importance = TaskImportance.NORMAL;
-                else if (text.contains("važan")) importance = TaskImportance.IMPORTANT;
-                else if (text.contains("ekstremno")) importance = TaskImportance.EXTREMELY_IMPORTANT;
-                else if (text.contains("specijalan")) importance = TaskImportance.SPECIAL;
-            }
+            boolean success;
 
-            boolean success = taskTemplateService.addTaskTemplate(
-                    selectedCategory.getId(),
-                    title,
-                    description,
-                    executionTime,
-                    frequencyInterval,
-                    frequencyUnit,
-                    startDateMillis,
-                    endDateMillis,
-                    difficulty,
-                    importance,
-                    checkBoxIsRepeated.isChecked()
-            );
+            if (taskToEdit != null) {
+                success = taskTemplateService.updateTaskTemplate(
+                        taskToEdit.getTemplateId(),
+                        selectedCategory.getId(),
+                        title,
+                        description,
+                        executionTime,
+                        frequencyInterval,
+                        frequencyUnit,
+                        startDateMillis,
+                        endDateMillis,
+                        difficulty,
+                        importance,
+                        checkBoxIsRepeated.isChecked()
+                );
 
-            if (success) {
-                Log.d("TaskTemplate", "TaskTemplate i TaskInstance kreirani uspešno!");
+                if (success) {
+                    Log.d("TaskTemplate", "TaskTemplate ažuriran uspešno!");
+                } else {
+                    Log.e("TaskTemplate", "Greška pri ažuriranju TaskTemplate-a");
+                }
+
             } else {
-                Log.e("TaskTemplate", "Greška pri kreiranju TaskTemplate-a");
+                success = taskTemplateService.addTaskTemplate(
+                        selectedCategory.getId(),
+                        title,
+                        description,
+                        executionTime,
+                        frequencyInterval,
+                        frequencyUnit,
+                        startDateMillis,
+                        endDateMillis,
+                        difficulty,
+                        importance,
+                        checkBoxIsRepeated.isChecked()
+                );
+
+                if (success) {
+                    Log.d("TaskTemplate", "TaskTemplate i TaskInstance kreirani uspešno!");
+                } else {
+                    Log.e("TaskTemplate", "Greška pri kreiranju TaskTemplate-a");
+                }
             }
+
+            requireActivity().getSupportFragmentManager().popBackStack();
         });
     }
 
+    private TaskDifficulty getSelectedDifficulty(RadioGroup radioGroupDifficulty) {
+        int selectedDifficultyId = radioGroupDifficulty.getCheckedRadioButtonId();
+        TaskDifficulty difficulty = TaskDifficulty.EASY; // default
+
+        if (selectedDifficultyId != -1) {
+            if (selectedDifficultyId == R.id.radioDifficultyVeryEasy) difficulty = TaskDifficulty.VERY_EASY;
+            else if (selectedDifficultyId == R.id.radioDifficultyEasy) difficulty = TaskDifficulty.EASY;
+            else if (selectedDifficultyId == R.id.radioDifficultyHard) difficulty = TaskDifficulty.HARD;
+            else if (selectedDifficultyId == R.id.radioDifficultyExtreme) difficulty = TaskDifficulty.EXTREME;
+        }
+        return difficulty;
+    }
+
+    private TaskImportance getSelectedImportance(RadioGroup radioGroupImportance) {
+        int selectedImportanceId = radioGroupImportance.getCheckedRadioButtonId();
+        TaskImportance importance = TaskImportance.NORMAL; // default
+
+        if (selectedImportanceId != -1) {
+            if (selectedImportanceId == R.id.radioImportanceNormal) importance = TaskImportance.NORMAL;
+            else if (selectedImportanceId == R.id.radioImportanceImportant) importance = TaskImportance.IMPORTANT;
+            else if (selectedImportanceId == R.id.radioImportanceExtreme) importance = TaskImportance.EXTREMELY_IMPORTANT;
+            else if (selectedImportanceId == R.id.radioImportanceSpecial) importance = TaskImportance.SPECIAL;
+        }
+        return importance;
+    }
+
+    private FrequencyUnit getSelectedFrequencyUnit(RadioGroup etRepeatUnit) {
+        int selectedUnitId = etRepeatUnit.getCheckedRadioButtonId();
+        if (selectedUnitId != -1 && selectedUnitId == R.id.radioWeek) {
+            return FrequencyUnit.WEEK;
+        }
+        return FrequencyUnit.DAY;
+    }
+
+    private String formatDate(long millis) {
+        if (millis <= 0) return "";
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(millis);
+        return String.format(Locale.getDefault(), "%02d/%02d/%d",
+                cal.get(Calendar.DAY_OF_MONTH),
+                cal.get(Calendar.MONTH) + 1,
+                cal.get(Calendar.YEAR));
+    }
+
+    private void setRadioGroupSelection(RadioGroup group, Enum<?> value) {
+        int idToSelect = -1;
+        String enumName = value.name();
+
+        if (group.getId() == R.id.radioGroupDifficulty) {
+            if (enumName.equals(TaskDifficulty.VERY_EASY.name())) idToSelect = R.id.radioDifficultyVeryEasy;
+            else if (enumName.equals(TaskDifficulty.EASY.name())) idToSelect = R.id.radioDifficultyEasy;
+            else if (enumName.equals(TaskDifficulty.HARD.name())) idToSelect = R.id.radioDifficultyHard;
+            else if (enumName.equals(TaskDifficulty.EXTREME.name())) idToSelect = R.id.radioDifficultyExtreme;
+        } else if (group.getId() == R.id.radioGroupImportance) {
+            if (enumName.equals(TaskImportance.NORMAL.name())) idToSelect = R.id.radioImportanceNormal;
+            else if (enumName.equals(TaskImportance.IMPORTANT.name())) idToSelect = R.id.radioImportanceImportant;
+            else if (enumName.equals(TaskImportance.EXTREMELY_IMPORTANT.name())) idToSelect = R.id.radioImportanceExtreme; // Proverite da li je ID radioImportanceExtreme
+            else if (enumName.equals(TaskImportance.SPECIAL.name())) idToSelect = R.id.radioImportanceSpecial;
+        }
+
+        if (idToSelect != -1) {
+            group.check(idToSelect);
+        }
+    }
+
+    private void setSelectedCategory(String categoryId) {
+        ArrayAdapter<Category> adapter = (ArrayAdapter<Category>) spinnerCategory.getAdapter();
+        if (adapter != null) {
+            for (int i = 0; i < adapter.getCount(); i++) {
+                Category category = adapter.getItem(i);
+                if (category != null && category.getId().equals(categoryId)) {
+                    spinnerCategory.setSelection(i);
+                    break;
+                }
+            }
+        }
+    }
     private Calendar getDateFromString(String dateString) {
         try {
             String[] dateParts = dateString.split("/");
