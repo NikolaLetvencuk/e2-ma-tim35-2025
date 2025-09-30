@@ -455,6 +455,7 @@ public class CalendarFragment extends Fragment {
             // NAPOMENA: Dodao sam template.isRecurring() jer je TaskItemDto uvek primao 6 parametara
             // (Ili se TaskItemDto mora prilagoditi da prima 5)
             tasks.add(new TaskItemDto(
+                    instance.getInstanceId(),
                     template.getName(),
                     template.getDescription(),
                     instance.getInstanceDate(),

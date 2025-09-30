@@ -117,4 +117,37 @@ public class TaskInstanceDao {
         db.close();
         return taskInstances;
     }
+
+    public TaskInstance findTaskById(String instanceId) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        String selection = DatabaseHelper.COL_INSTANCE_ID + " = ?";
+        String[] selectionArgs = { instanceId };
+
+        Cursor cursor = db.query(
+                DatabaseHelper.TABLE_TASK_INSTANCES,
+                null,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                null
+        );
+
+        TaskInstance taskInstance = null;
+
+        if (cursor.moveToFirst()) {
+            String id = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_ID));
+            long date = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_DATE));
+            TaskStatus status = TaskStatus.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_STATUS)));
+            String templateId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_TEMPLATE_ID));
+
+            taskInstance = new TaskInstance(id, date, status, templateId);
+        }
+
+        cursor.close();
+        db.close();
+
+        return taskInstance;
+    }
 }

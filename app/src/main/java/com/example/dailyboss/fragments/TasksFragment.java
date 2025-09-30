@@ -5,15 +5,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentTransaction;
 
 import com.example.dailyboss.R;
 
@@ -80,6 +76,7 @@ public class TasksFragment extends Fragment {
                         .commit();
             });
         }
+        updateButtonState(false); // ako hoćeš da default bude Calendar
 
         // 4. Logika za "Back" dugme (ostaje nepromenjena, ali je dugme sakriveno u XML-u)
         // ImageButton btnBack = view.findViewById(R.id.btnBack);
@@ -109,21 +106,23 @@ public class TasksFragment extends Fragment {
      * Vizuelno ažurira dugmad (List/Calendar) da bi se signalizirao aktivni prikaz.
      */
     private void updateButtonState(boolean isCalendarActive) {
-        // Koristite boje iz vašeg Color resursa ili direktno Android boje
-        int activeColor = getResources().getColor(R.color.calendar_black); // 🚨 Definišite u colors.xml
+        int activeColor = getResources().getColor(R.color.calendar_black);
         int inactiveColor = getResources().getColor(android.R.color.darker_gray);
 
-        // Simetrično postavljanje stanja
         if (isCalendarActive) {
             btnCalendarView.setTextColor(activeColor);
             btnListView.setTextColor(inactiveColor);
 
+            btnCalendarView.setBackgroundResource(R.drawable.bottom_border_active_ripple);
+            btnListView.setBackgroundResource(R.drawable.bottom_border_inactive_ripple);
+
         } else {
             btnCalendarView.setTextColor(inactiveColor);
             btnListView.setTextColor(activeColor);
-        }
 
-        // Možete dodati i logiku za podvlačenje (border bottom)
-        // ili promenu boje pozadine (background) da bi izgledalo vernije tab-u.
+            btnCalendarView.setBackgroundResource(R.drawable.bottom_border_inactive_ripple);
+            btnListView.setBackgroundResource(R.drawable.bottom_border_active_ripple);
+        }
     }
+
 }

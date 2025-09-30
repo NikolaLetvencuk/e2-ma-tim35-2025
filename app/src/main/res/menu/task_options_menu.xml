@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/action_done"
+        android:title="Urađeno" />
+
+    <item
+        android:id="@+id/action_cancelled"
+        android:title="Otkazano" />
+
+    <item
+        android:id="@+id/action_paused"
+        android:title="Pauzirano" />
+
+    <item
+        android:id="@+id/action_active"
+        android:title="Aktivno" />
+
+</menu>

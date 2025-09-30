@@ -1,5 +1,6 @@
 package com.example.dailyboss.fragments;
 
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,6 +10,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -16,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.dailyboss.R;
 import com.example.dailyboss.adapters.TaskAdapter;
 import com.example.dailyboss.dto.TaskItemDto;
+import com.example.dailyboss.enums.TaskStatus;
 import com.example.dailyboss.model.TaskInstance;
 import com.example.dailyboss.model.TaskTemplate;
 import com.example.dailyboss.service.CategoryService;
@@ -37,6 +40,9 @@ public class TaskListFragment extends Fragment {
     private TaskInstanceService taskInstanceService;
     private TaskTemplateService taskTemplateService;
     private CategoryService categoryService;
+
+    private boolean oneTime = true;
+    private boolean repeating = true;
 
     private List<TaskItemDto> allTasks = new ArrayList<>();
 
@@ -62,9 +68,6 @@ public class TaskListFragment extends Fragment {
         btnOneTimeTasks.setOnClickListener(v -> filterTasks(false));
         btnRepeatingTasks.setOnClickListener(v -> filterTasks(true));
 
-        // Početno učitavanje jednokratnih zadataka
-        filterTasks(false);
-
         return view;
     }
 
@@ -78,33 +81,93 @@ public class TaskListFragment extends Fragment {
                 .collect(Collectors.toMap(TaskTemplate::getTemplateId, template -> template));
 
         allTasks.clear();
+
+        long now = System.currentTimeMillis(); // trenutni timestamp
+
         for (TaskInstance instance : allInstances) {
             TaskTemplate template = templatesMap.get(instance.getTemplateId());
             if (template != null) {
-                String color = categoryService.getColorById(template.getCategoryId());
-                TaskItemDto dto = new TaskItemDto(
-                        template.getName(),
-                        template.getDescription(),
-                        instance.getInstanceDate(),
-                        instance.getStatus().toString(),
-                        color,
-                        template.isRecurring()
-                );
-                // Dodavanje informacije o tome da li je task ponavljajući
-                allTasks.add(dto);
+                // Provera: datum taska je sada ili u budućnosti, i status je aktivan
+                if (instance.getInstanceDate() >= now || instance.getStatus() == TaskStatus.ACTIVE) {
+
+                    String color = categoryService.getColorById(template.getCategoryId());
+                    TaskItemDto dto = new TaskItemDto(
+                            instance.getInstanceId(),
+                            template.getName(),
+                            template.getDescription(),
+                            instance.getInstanceDate(),
+                            instance.getStatus().toString(),
+                            color,
+                            template.isRecurring()
+                    );
+                    allTasks.add(dto);
+                }
             }
         }
-    }
 
-    private void filterTasks(boolean isRepeating) {
-        List<TaskItemDto> filteredList = allTasks.stream()
-                .filter(task -> task.isRepeating() == isRepeating)
-                .collect(Collectors.toList());
-
-        adapter = new TaskAdapter(filteredList, task -> {
+        adapter = new TaskAdapter(this.getContext(), allTasks, task -> {
             Toast.makeText(getContext(), "Task Clicked: " + task.getTitle(), Toast.LENGTH_SHORT).show();
-            // Implementirati otvaranje detalja zadatka, ako je potrebno
         });
         rvAllTasks.setAdapter(adapter);
+    }
+
+    private void filterTasks(boolean isRepeatingClicked) {
+        // Toggle stanje
+        if (isRepeatingClicked) {
+            repeating = !repeating;
+        } else {
+            oneTime = !oneTime;
+        }
+
+        // Filtriraj na osnovu trenutnog stanja
+        List<TaskItemDto> filteredList = allTasks.stream()
+                .filter(task -> {
+                    if (task.isRepeating() && repeating) return true;
+                    if (!task.isRepeating() && oneTime) return true;
+                    return false;
+                })
+                .collect(Collectors.toList());
+
+        // Ako su oba true, prikazi sve
+        if (repeating && oneTime) {
+            filteredList = new ArrayList<>(allTasks);
+        }
+
+        adapter = new TaskAdapter(this.getContext(), filteredList, task -> {
+            Toast.makeText(getContext(), "Task Clicked: " + task.getTitle(), Toast.LENGTH_SHORT).show();
+        });
+        rvAllTasks.setAdapter(adapter);
+
+        updateButtonsState();
+    }
+
+    private void updateButtonsState() {
+        // Direktno koristi R.color umesto getColor()
+        int activeTextColor = getResources().getColor(R.color.white);
+        int inactiveTextColor = getResources().getColor(R.color.white);
+
+        // Aktivna boja (npr. crna pozadina)
+        ColorStateList activeTint = ContextCompat.getColorStateList(getContext(), R.color.calendar_black);
+
+        // Neaktivna boja (npr. siva pozadina)
+        ColorStateList inactiveTint = ContextCompat.getColorStateList(getContext(), android.R.color.darker_gray);
+
+        // One-Time dugme
+        if (oneTime) {
+            btnOneTimeTasks.setBackgroundTintList(activeTint);
+            btnOneTimeTasks.setTextColor(activeTextColor);
+        } else {
+            btnOneTimeTasks.setBackgroundTintList(inactiveTint);
+            btnOneTimeTasks.setTextColor(inactiveTextColor);
+        }
+
+        // Repeating dugme
+        if (repeating) {
+            btnRepeatingTasks.setBackgroundTintList(activeTint);
+            btnRepeatingTasks.setTextColor(activeTextColor);
+        } else {
+            btnRepeatingTasks.setBackgroundTintList(inactiveTint);
+            btnRepeatingTasks.setTextColor(inactiveTextColor);
+        }
     }
 }
