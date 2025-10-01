@@ -11,7 +11,7 @@ import java.util.Calendar;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.example.dailyboss.dto.TaskItemDto;
+import com.example.dailyboss.data.dto.TaskItemDto;
 
 import java.util.List;
 

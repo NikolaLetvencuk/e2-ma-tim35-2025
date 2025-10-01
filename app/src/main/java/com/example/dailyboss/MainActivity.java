@@ -2,10 +2,9 @@ package com.example.dailyboss;
 
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
-import com.example.dailyboss.fragments.CategoryListFragment;
-import com.example.dailyboss.fragments.CreateTaskFragment;
-import com.example.dailyboss.fragments.HomeFragment;
-import com.example.dailyboss.fragments.TasksFragment;
+import com.example.dailyboss.presentation.fragments.CategoryListFragment;
+import com.example.dailyboss.presentation.fragments.HomeFragment;
+import com.example.dailyboss.presentation.fragments.TasksFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
