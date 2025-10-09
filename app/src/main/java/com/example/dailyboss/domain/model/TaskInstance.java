@@ -1,0 +1,62 @@
+package com.example.dailyboss.domain.model;
+
+import com.example.dailyboss.domain.enums.TaskStatus;
+
+public class TaskInstance {
+    private String instanceId;
+    private long instanceDate;
+    private TaskStatus status;
+    private String templateId;
+    private String userId;
+
+    public TaskInstance(String instanceId, long instanceDate, TaskStatus status, String templateId, String userId) {
+        this.instanceId = instanceId;
+        this.instanceDate = instanceDate;
+        this.status = status;
+        this.templateId = templateId;
+        this.userId = userId;
+    }
+
+    public TaskInstance() {
+    }
+
+    public String getInstanceId() {
+        return instanceId;
+    }
+
+    public void setInstanceId(String instanceId) {
+        this.instanceId = instanceId;
+    }
+
+    public long getInstanceDate() {
+        return instanceDate;
+    }
+
+    public void setInstanceDate(long instanceDate) {
+        this.instanceDate = instanceDate;
+    }
+
+    public TaskStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TaskStatus status) {
+        this.status = status;
+    }
+
+    public String getTemplateId() {
+        return templateId;
+    }
+
+    public void setTemplateId(String templateId) {
+        this.templateId = templateId;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+}

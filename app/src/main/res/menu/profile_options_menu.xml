@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_show_qr"
+        android:title="Prikaži QR kod" />
+    <item
+        android:id="@+id/action_change_password"
+        android:title="Promeni lozinku" />
+    <item
+        android:id="@+id/action_statistics"
+        android:title="Show statistics" />
+    <item
+        android:id="@+id/action_logout"
+        android:title="Odjavi se" />
+</menu>

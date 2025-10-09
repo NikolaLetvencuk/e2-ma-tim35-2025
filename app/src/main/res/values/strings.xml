@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">DailyBoss</string>
+    <string-array name="repeat_unit_options">
+        <item>Dan</item>
+        <item>Nedelja</item>
+    </string-array>
 </resources>

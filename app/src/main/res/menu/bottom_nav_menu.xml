@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/nav_home"
-        android:title="Home"
-        android:icon="@drawable/ic_quest" />
-
-    <item
-        android:id="@+id/nav_home2"
-        android:title="Home"
-        android:icon="@drawable/ic_home" />
-
-    <item
-        android:id="@+id/nav_home3"
-        android:title="Home"
+        android:id="@+id/activity_tasks"
+        android:title="Tasks"
         android:icon="@drawable/ic_task" />
 
     <item
-        android:id="@+id/nav_home4"
-        android:title="Home"
-        android:icon="@drawable/ic_quest" />
+        android:id="@+id/nav_categories"
+        android:title="Friends"
+        android:icon="@drawable/ic_category" />
 
     <item
-        android:id="@+id/nav_categories"
+        android:id="@+id/nav_categories_list"
         android:title="Categories"
         android:icon="@drawable/ic_category" />
+
+    <item
+        android:id="@+id/nav_shop"
+        android:title="Shop"
+        android:icon="@drawable/ic_shop" />
+
+    <item
+        android:id="@+id/activity_profile"
+        android:title="Profile"
+        android:icon="@drawable/ic_quest" />
 </menu>
