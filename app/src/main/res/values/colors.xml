@@ -15,4 +15,14 @@
     <color name="blue">#2196F3</color>
     <color name="yellow2">#FFC107</color>
     <color name="disabled_text_grey">#777777</color>
+    <color name="dark_background">#1A1A2E</color>
+    <color name="card_background">#2C2C4A</color>
+    <color name="text_light">#E0E0FF</color>
+    <color name="text_dark">#A0A0B0</color>
+    <color name="accent_color">#E94560</color>
+    <color name="xp_color">#FFD700</color> <!-- Gold -->
+    <color name="pp_color">#ADFF2F</color> <!-- Green Yellow -->
+    <color name="coins_color">#FF8C00</color> <!-- Dark Orange -->
+    <color name="level_progress">#00FFFF</color> <!-- Cyan -->
+    <color name="button_color">#533483</color>
 </resources>

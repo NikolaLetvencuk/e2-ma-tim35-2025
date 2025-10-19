@@ -31,6 +31,7 @@ public class TaskInstanceDao {
         values.put(DatabaseHelper.COL_INSTANCE_DATE, taskInstance.getInstanceDate());
         values.put(DatabaseHelper.COL_INSTANCE_STATUS, taskInstance.getStatus().name());
         values.put(DatabaseHelper.COL_INSTANCE_TEMPLATE_ID, taskInstance.getTemplateId());
+        values.put(DatabaseHelper.COL_INSTANCE_USER_ID, taskInstance.getUserId());
 
         long result = db.insert(DatabaseHelper.TABLE_TASK_INSTANCES, null, values);
         db.close();
@@ -49,8 +50,9 @@ public class TaskInstanceDao {
                 long instanceDate = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_DATE));
                 TaskStatus status = TaskStatus.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_STATUS)));
                 String templateId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_TEMPLATE_ID));
+                String userId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_USER_ID));
 
-                list.add(new TaskInstance(instanceId, instanceDate, status, templateId));
+                list.add(new TaskInstance(instanceId, instanceDate, status, templateId, userId));
             } while (cursor.moveToNext());
         }
         cursor.close();
@@ -64,6 +66,7 @@ public class TaskInstanceDao {
         values.put(DatabaseHelper.COL_INSTANCE_DATE, taskInstance.getInstanceDate());
         values.put(DatabaseHelper.COL_INSTANCE_STATUS, taskInstance.getStatus().name());
         values.put(DatabaseHelper.COL_INSTANCE_TEMPLATE_ID, taskInstance.getTemplateId());
+        values.put(DatabaseHelper.COL_INSTANCE_USER_ID, taskInstance.getUserId());
 
         int updated = db.update(DatabaseHelper.TABLE_TASK_INSTANCES, values,
                 DatabaseHelper.COL_INSTANCE_ID + " = ?", new String[]{taskInstance.getInstanceId()});
@@ -133,7 +136,8 @@ public class TaskInstanceDao {
                     cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_ID)),
                     cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_DATE)),
                     TaskStatus.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_STATUS))),
-                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_TEMPLATE_ID))
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_TEMPLATE_ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_USER_ID))
             ));
         }
 
@@ -165,8 +169,9 @@ public class TaskInstanceDao {
             long date = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_DATE));
             TaskStatus status = TaskStatus.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_STATUS)));
             String templateId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_TEMPLATE_ID));
+            String userId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_USER_ID));
 
-            taskInstance = new TaskInstance(id, date, status, templateId);
+            taskInstance = new TaskInstance(id, date, status, templateId, userId);
         }
 
         cursor.close();
@@ -263,8 +268,9 @@ public class TaskInstanceDao {
                 long instanceDate = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_DATE));
                 TaskStatus status = TaskStatus.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_STATUS)));
                 String tempId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_TEMPLATE_ID));
+                String userId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_USER_ID));
 
-                list.add(new TaskInstance(instanceId, instanceDate, status, tempId));
+                list.add(new TaskInstance(instanceId, instanceDate, status, tempId, userId));
             } while (cursor.moveToNext());
         }
         cursor.close();

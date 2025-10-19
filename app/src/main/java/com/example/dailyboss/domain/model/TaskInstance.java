@@ -7,12 +7,14 @@ public class TaskInstance {
     private long instanceDate;
     private TaskStatus status;
     private String templateId;
+    private String userId;
 
-    public TaskInstance(String instanceId, long instanceDate, TaskStatus status, String templateId) {
+    public TaskInstance(String instanceId, long instanceDate, TaskStatus status, String templateId, String userId) {
         this.instanceId = instanceId;
         this.instanceDate = instanceDate;
         this.status = status;
         this.templateId = templateId;
+        this.userId = userId;
     }
 
     public TaskInstance() {
@@ -48,5 +50,13 @@ public class TaskInstance {
 
     public void setTemplateId(String templateId) {
         this.templateId = templateId;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 }

@@ -11,12 +11,12 @@
         android:icon="@drawable/ic_task" />
 
     <item
-        android:id="@+id/nav_home3"
-        android:title="Home"
+        android:id="@+id/activity_battle"
+        android:title="Battle"
         android:icon="@drawable/ic_task" />
 
     <item
-        android:id="@+id/nav_home4"
+        android:id="@+id/activity_profile"
         android:title="Home"
         android:icon="@drawable/ic_quest" />
 

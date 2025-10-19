@@ -3,6 +3,7 @@ package com.example.dailyboss.data.repository;
 import android.content.Context;
 import android.graphics.Color;
 
+import com.example.dailyboss.data.SharedPreferencesHelper;
 import com.example.dailyboss.data.dao.CategoryDao;
 import com.example.dailyboss.domain.model.Category;
 import com.example.dailyboss.domain.repository.ICategoryRepository;
@@ -13,9 +14,15 @@ import java.util.UUID;
 public class CategoryRepositoryImpl implements ICategoryRepository {
 
     private final CategoryDao categoryDao;
+    private final Context context;
+    private final SharedPreferencesHelper prefs;
+    private String userId;
 
     public CategoryRepositoryImpl(Context context) {
         this.categoryDao = new CategoryDao(context);
+        this.prefs = new SharedPreferencesHelper(context);
+        this.context = context.getApplicationContext();
+        this.userId = prefs.getLoggedInUserId();
     }
 
     @Override
@@ -29,7 +36,7 @@ public class CategoryRepositoryImpl implements ICategoryRepository {
         }
 
         String id = UUID.randomUUID().toString();
-        Category category = new Category(id, color, name);
+        Category category = new Category(id, color, name, userId);
         android.util.Log.d("CategoryService",
                 "Dodajem kategoriju: ID=" + category.getId() + ", Name=" + category.getName() + ", Color=" + category.getColor());
         return categoryDao.insert(category);

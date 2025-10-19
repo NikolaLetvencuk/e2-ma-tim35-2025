@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/dark_background"
+    android:padding="0dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:paddingTop="24dp"
+        android:paddingBottom="16dp">
+
+        <!-- Top Section: Avatar, Username, Options -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp">
+
+            <!-- Avatar -->
+            <androidx.cardview.widget.CardView
+                android:id="@+id/cardAvatar"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                app:cardCornerRadius="40dp"
+                app:cardElevation="8dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:cardBackgroundColor="@color/card_background">
+
+                <ImageView
+                    android:id="@+id/imgAvatar"
+                    android:layout_width="76dp"
+                    android:layout_height="76dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="Avatar"
+                    android:src="@drawable/avatar_6"
+                    android:scaleType="centerCrop"/>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Korisničko ime i nivo/titula -->
+            <LinearLayout
+                android:id="@+id/userInfoLayout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginStart="16dp"
+                app:layout_constraintStart_toEndOf="@id/cardAvatar"
+                app:layout_constraintTop_toTopOf="@id/cardAvatar"
+                app:layout_constraintBottom_toBottomOf="@id/cardAvatar"
+                app:layout_constraintEnd_toStartOf="@+id/btnOptions">
+
+                <TextView
+                    android:id="@+id/tvUsername"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Username"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_light" />
+
+                <TextView
+                    android:id="@+id/tvLevelTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Level 1 - Početna titula"
+                    android:textColor="@color/text_dark"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Dugme za opcije (tri tačke) -->
+            <ImageView
+                android:id="@+id/btnOptions"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/ic_more"
+            android:contentDescription="Opcije"
+            android:padding="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@color/text_light"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- QR Kod (ovo ćemo sakriti i prikazati u dijalogu, ali ID zadržavamo) -->
+        <!-- OBRISAN JE QR KOD IZ MAIN LAYOUTA, ON ĆE SE GENERISATI I PRIKAZATI U DIJALOGU -->
+        <!-- Postojao je imgQRCode i qr_code_image (dva puta), jedan je uklonjen iznad, drugi će biti uklonjen ovde. -->
+        <!-- Ne trebaju nam dva ImageViewa za QR kod. Ostavljamo samo jedan ako ga koristiš negde drugo -->
+        <!-- Ako se qr_code_image nigde ne koristi osim za prikaz, možeš ga potpuno ukloniti iz XML-a. -->
+        <!-- Zadržavam ga samo ako je negde drugde u kodu referenciran, ali ga više ne prikazujemo direktno -->
+        <ImageView
+            android:id="@+id/qr_code_image"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            android:contentDescription="QR kod korisnika (sakriven)"/>
+
+
+        <!-- Panel sa XP, PP, Coins -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="6dp"
+            app:cardBackgroundColor="@color/card_background">
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
+                android:gravity="center">
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center">
+                    <TextView
+                        android:id="@+id/tvXP"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="XP: 0"
+                        android:textSize="18sp"
+                        android:textColor="@color/xp_color"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Experience Points"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_dark"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center">
+                    <TextView
+                        android:id="@+id/tvPP"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="PP: 0"
+                        android:textSize="18sp"
+                        android:textColor="@color/pp_color"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Power Points"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_dark"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center">
+                    <TextView
+                        android:id="@+id/tvCoins"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Coins: 0"
+                        android:textSize="18sp"
+                        android:textColor="@color/coins_color"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Novčići"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_dark"/>
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- Bedževi fragment -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Moji Bedževi"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_light"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="12dp"/>
+        <fragment
+            android:id="@+id/fragmentUserBadges"
+            android:name="com.example.dailyboss.presentation.fragments.UserBadgesFragment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="24dp"
+            tools:layout="@layout/fragment_user_badges" />
+
+        <!-- Oprema -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Moja Oprema"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_light"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="12dp"/>
+        <fragment
+            android:id="@+id/fragmentUserEqupiment"
+            android:name="com.example.dailyboss.presentation.fragments.EquipmentFragment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="24dp"
+            tools:layout="@layout/fragment_equipment" />
+
+        <!-- Promena lozinke dugme (ako je i dalje potrebno van menija) -->
+        <!-- S obzirom da ce Promena lozinke biti u meniju, ovo dugme mozda nije potrebno.
+             Ako zelis da bude i ovde, ostavi ga. U suprotnom, mozes ga obrisati. -->
+        <!-- Ostavljam ga ovde, ali je njegova funkcionalnost premeštena u meni. -->
+        <Button
+            android:id="@+id/btnChangePassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Promeni lozinku"
+            android:backgroundTint="@color/button_color"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"
+            app:cornerRadius="12dp"
+            app:elevation="8dp"
+            android:visibility="gone"
+        />
+    </LinearLayout>
+</ScrollView>

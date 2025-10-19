@@ -2,6 +2,7 @@ package com.example.dailyboss.data.repository;
 
 import android.content.Context;
 
+import com.example.dailyboss.data.SharedPreferencesHelper;
 import com.example.dailyboss.data.dao.TaskInstanceDao;
 import com.example.dailyboss.data.dao.TaskTemplateDao;
 import com.example.dailyboss.domain.enums.TaskStatus;
@@ -17,16 +18,21 @@ public class TaskInstanceRepositoryImpl implements ITaskInstanceRepository {
 
     private final TaskInstanceDao taskInstanceDAO;
     private final TaskTemplateDao taskTemplateDao;
-
+    private final Context context;
+    private final SharedPreferencesHelper prefs;
+    private String userId;
     public TaskInstanceRepositoryImpl(Context context) {
         this.taskInstanceDAO = new TaskInstanceDao(context);
         this.taskTemplateDao = new TaskTemplateDao(context);
+        this.prefs = new SharedPreferencesHelper(context);
+        this.context = context.getApplicationContext();
+        this.userId = prefs.getLoggedInUserId();
     }
 
     @Override
     public boolean addTaskInstance(String taskId, long instanceDate, TaskStatus status, String templateId) {
         String instanceId = UUID.randomUUID().toString();
-        TaskInstance taskInstance = new TaskInstance(instanceId, instanceDate, status, templateId);
+        TaskInstance taskInstance = new TaskInstance(instanceId, instanceDate, status, templateId, userId);
         return taskInstanceDAO.insert(taskInstance);
     }
 

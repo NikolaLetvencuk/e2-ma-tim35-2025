@@ -7,6 +7,7 @@ import com.example.dailyboss.domain.enums.TaskImportance;
 public class TaskTemplate {
     private String templateId;
     private String categoryId;
+    private String userId;
     private String name;
     private String description;
     private String executionTime;
@@ -18,9 +19,10 @@ public class TaskTemplate {
     private TaskImportance importance;
     private boolean isRecurring;
 
-    public TaskTemplate(String templateId, String categoryId, String name, String description, String executionTime, int frequencyInterval, FrequencyUnit frequencyUnit, long startDate, long endDate, TaskDifficulty difficulty, TaskImportance importance, boolean isRecurring) {
+    public TaskTemplate(String templateId, String categoryId, String userId, String name, String description, String executionTime, int frequencyInterval, FrequencyUnit frequencyUnit, long startDate, long endDate, TaskDifficulty difficulty, TaskImportance importance, boolean isRecurring) {
         this.templateId = templateId;
         this.categoryId = categoryId;
+        this.userId = userId;
         this.name = name;
         this.description = description;
         this.executionTime = executionTime;
@@ -82,6 +84,14 @@ public class TaskTemplate {
 
     public void setFrequencyInterval(int frequencyInterval) {
         this.frequencyInterval = frequencyInterval;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public FrequencyUnit getFrequencyUnit() {

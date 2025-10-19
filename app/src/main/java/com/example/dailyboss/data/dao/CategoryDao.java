@@ -24,6 +24,8 @@ public class CategoryDao {
         values.put(DatabaseHelper.COL_ID, category.getId());
         values.put(DatabaseHelper.COL_NAME, category.getName());
         values.put(DatabaseHelper.COL_COLOR, category.getColor());
+        values.put(DatabaseHelper.COL_CATEGORY_USER_ID, category.getUserId());
+
         android.util.Log.d("CategoryService",
                 "Dodajem kategoriju: ID=" + category.getId() + ", Name=" + category.getName() + ", Color=" + category.getColor() + values);
         long result = db.insert(DatabaseHelper.TABLE_CATEGORIES, null, values);
@@ -41,8 +43,9 @@ public class CategoryDao {
                 String id = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_ID));
                 String name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_NAME));
                 String color = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_COLOR));
+                String userId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CATEGORY_USER_ID));
 
-                list.add(new Category(id, color, name));
+                list.add(new Category(id, color, name, userId));
             } while (cursor.moveToNext());
         }
         cursor.close();

@@ -30,6 +30,7 @@ public class TaskTemplateDao {
         ContentValues values = new ContentValues();
         values.put(DatabaseHelper.COL_TEMPLATE_ID, taskTemplate.getTemplateId());
         values.put(DatabaseHelper.COL_TEMPLATE_CATEGORY_ID, taskTemplate.getCategoryId());
+        values.put(DatabaseHelper.COL_TEMPLATE_USER_ID, taskTemplate.getUserId());
         values.put(DatabaseHelper.COL_TEMPLATE_NAME, taskTemplate.getName());
         values.put(DatabaseHelper.COL_TEMPLATE_DESCRIPTION, taskTemplate.getDescription());
         values.put(DatabaseHelper.COL_TEMPLATE_EXECUTION_TIME, taskTemplate.getExecutionTime());
@@ -57,6 +58,7 @@ public class TaskTemplateDao {
                 String templateId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_ID));
                 String categoryId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_CATEGORY_ID));
                 String name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_NAME));
+                String createdByUserId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_USER_ID));
                 String description = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_DESCRIPTION));
                 String executionTime = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_EXECUTION_TIME));
                 int frequencyInterval = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_FREQUENCY_INTERVAL));
@@ -67,7 +69,7 @@ public class TaskTemplateDao {
                 TaskImportance importance = TaskImportance.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_IMPORTANCE)));
                 boolean isRecurring = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_IS_RECURRING)) == 1;
 
-                list.add(new TaskTemplate(templateId, categoryId, name, description, executionTime, frequencyInterval, frequencyUnit, startDate, endDate, difficulty, importance, isRecurring));
+                list.add(new TaskTemplate(templateId, categoryId, createdByUserId, name, description, executionTime, frequencyInterval, frequencyUnit, startDate, endDate, difficulty, importance, isRecurring));
             } while (cursor.moveToNext());
         }
         cursor.close();
@@ -81,6 +83,7 @@ public class TaskTemplateDao {
         values.put(DatabaseHelper.COL_TEMPLATE_CATEGORY_ID, taskTemplate.getCategoryId());
         values.put(DatabaseHelper.COL_TEMPLATE_NAME, taskTemplate.getName());
         values.put(DatabaseHelper.COL_TEMPLATE_DESCRIPTION, taskTemplate.getDescription());
+        values.put(DatabaseHelper.COL_TEMPLATE_USER_ID, taskTemplate.getUserId());
         values.put(DatabaseHelper.COL_TEMPLATE_EXECUTION_TIME, taskTemplate.getExecutionTime());
         values.put(DatabaseHelper.COL_TEMPLATE_FREQUENCY_INTERVAL, taskTemplate.getFrequencyInterval());
         values.put(DatabaseHelper.COL_TEMPLATE_FREQUENCY_UNIT, taskTemplate.getFrequencyUnit().name());
@@ -126,6 +129,7 @@ public class TaskTemplateDao {
                 String templateId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_ID));
                 String categoryId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_CATEGORY_ID));
                 String name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_NAME));
+                String userId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_USER_ID));
                 String description = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_DESCRIPTION));
                 String executionTime = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_EXECUTION_TIME));
                 int frequencyInterval = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_FREQUENCY_INTERVAL));
@@ -136,7 +140,7 @@ public class TaskTemplateDao {
                 TaskImportance importance = TaskImportance.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_IMPORTANCE)));
                 boolean isRecurring = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_IS_RECURRING)) == 1;
 
-                list.add(new TaskTemplate(templateId, categoryId, name, description, executionTime, frequencyInterval, frequencyUnit, startDate, endDate, difficulty, importance, isRecurring));
+                list.add(new TaskTemplate(templateId, categoryId, userId, name, description, executionTime, frequencyInterval, frequencyUnit, startDate, endDate, difficulty, importance, isRecurring));
             } while (cursor.moveToNext());
         }
 
@@ -166,6 +170,7 @@ public class TaskTemplateDao {
                 String templateId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_ID));
                 String categoryId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_CATEGORY_ID));
                 String name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_NAME));
+                String userId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_USER_ID));
                 String description = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_DESCRIPTION));
                 String executionTime = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_EXECUTION_TIME));
                 int frequencyInterval = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_FREQUENCY_INTERVAL));
@@ -184,7 +189,7 @@ public class TaskTemplateDao {
                 );
                 boolean isRecurring = cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_TEMPLATE_IS_RECURRING)) == 1;
 
-                TaskTemplate template = new TaskTemplate(templateId, categoryId, name, description, executionTime, frequencyInterval, frequencyUnit, startDate, endDate, difficulty, importance, isRecurring);
+                TaskTemplate template = new TaskTemplate(templateId, categoryId, userId, name, description, executionTime, frequencyInterval, frequencyUnit, startDate, endDate, difficulty, importance, isRecurring);
 
                 result.put(templateId, template);
 

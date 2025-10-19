@@ -4,11 +4,13 @@ public class Category {
     private String id;
     private String name;
     private String color;
+    private String userId;
 
-    public Category(String id, String color, String name) {
+    public Category(String id, String color, String name, String userId) {
         this.name = name;
         this.color = color;
         this.id = id;
+        this.userId = userId;
     }
 
     public Category() {}
@@ -36,6 +38,14 @@ public class Category {
 
     public void setColor(String color) {
         this.color = color;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     @Override

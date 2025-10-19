@@ -2,6 +2,7 @@ package com.example.dailyboss.data.repository;
 
 import android.content.Context;
 
+import com.example.dailyboss.data.SharedPreferencesHelper;
 import com.example.dailyboss.data.dao.TaskInstanceDao;
 import com.example.dailyboss.data.dao.TaskTemplateDao;
 import com.example.dailyboss.domain.enums.FrequencyUnit;
@@ -22,10 +23,14 @@ public class TaskTemplateRepositoryImpl implements ITaskTemplateRepository {
 
     private final TaskTemplateDao taskTemplateDao;
     private final TaskInstanceDao taskInstanceDao;
+    private final Context context;
+    private final SharedPreferencesHelper prefs;
 
     public TaskTemplateRepositoryImpl(Context context) {
+        this.context = context.getApplicationContext();
         this.taskTemplateDao = new TaskTemplateDao(context);
         this.taskInstanceDao = new TaskInstanceDao(context);
+        this.prefs = new SharedPreferencesHelper(context);
     }
 
     @Override
@@ -54,13 +59,14 @@ public class TaskTemplateRepositoryImpl implements ITaskTemplateRepository {
                                    int frequencyInterval, FrequencyUnit frequencyUnit,
                                    long startDate, long endDate, TaskDifficulty difficulty,
                                    TaskImportance importance, boolean isRecurring) {
+        String userId = prefs.getLoggedInUserId();
         String id = UUID.randomUUID().toString();
-        TaskTemplate taskTemplate = new TaskTemplate(id, categoryId, name, description, executionTime,
+        TaskTemplate taskTemplate = new TaskTemplate(id, categoryId, userId, name, description, executionTime,
                 frequencyInterval, frequencyUnit, startDate, endDate, difficulty, importance, isRecurring);
 
         long combined = combineDateAndTime(startDate, executionTime);
         if (!isRecurring) {
-            TaskInstance taskInstance = new TaskInstance(UUID.randomUUID().toString(), combined, TaskStatus.ACTIVE, id);
+            TaskInstance taskInstance = new TaskInstance(UUID.randomUUID().toString(), combined, TaskStatus.ACTIVE, id, userId);
             taskInstanceDao.insert(taskInstance);
         } else {
             Calendar calendar = Calendar.getInstance();
@@ -69,7 +75,7 @@ public class TaskTemplateRepositoryImpl implements ITaskTemplateRepository {
 
             do {
                 combined = combineDateAndTime(date, executionTime);
-                TaskInstance taskInstance = new TaskInstance(UUID.randomUUID().toString(), combined, TaskStatus.ACTIVE, id);
+                TaskInstance taskInstance = new TaskInstance(UUID.randomUUID().toString(), combined, TaskStatus.ACTIVE, id, userId);
                 taskInstanceDao.insert(taskInstance);
 
                 switch (frequencyUnit) {
@@ -91,8 +97,8 @@ public class TaskTemplateRepositoryImpl implements ITaskTemplateRepository {
                                       String executionTime, int frequencyInterval, FrequencyUnit frequencyUnit,
                                       long startDate, long endDate, TaskDifficulty difficulty, TaskImportance importance,
                                       boolean isRecurring) {
-
-        TaskTemplate taskTemplate = new TaskTemplate(templateId, categoryId, name, description, executionTime,
+        String userId = prefs.getLoggedInUserId();
+        TaskTemplate taskTemplate = new TaskTemplate(templateId, categoryId, userId, name, description, executionTime,
                 frequencyInterval, frequencyUnit, startDate, endDate, difficulty, importance, isRecurring);
 
         String newTemplateId = UUID.randomUUID().toString();
