@@ -1,0 +1,35 @@
+<!-- res/drawable/user_controls_bar_background.xml -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Spoljni sloj - tamniji obrub (opciono zlatni, kao na tvojoj slici) -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="#3F3F73"
+            android:endColor="#2C2C4A"
+            android:angle="270" />
+            <corners android:radius="12dp" />
+            <stroke android:width="2dp" android:color="@color/text_secondary" /> <!-- Svetliji zlatni obrub, kao na UI primerima -->
+        </shape>
+    </item>
+
+    <!-- Unutrašnji sloj - prelaz iz surface_primary ka crnoj -->
+    <item android:top="2dp" android:left="2dp" android:right="2dp" android:bottom="2dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:startColor="@color/surface_primary"
+            android:endColor="#000000"
+            android:angle="270"
+            android:type="linear" />
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+    <item android:top="2dp" android:left="2dp" android:right="2dp" android:bottom="2dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:endColor="@color/surface_primary"
+                android:angle="270"
+                android:type="linear" />
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+</layer-list>

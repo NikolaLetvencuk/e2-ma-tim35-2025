@@ -7,6 +7,7 @@ import com.example.dailyboss.data.dao.EquipmentDao;
 import com.example.dailyboss.data.dao.UserEquipmentDao;
 import com.example.dailyboss.domain.model.Equipment;
 import com.example.dailyboss.domain.model.UserEquipment;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore; // Ako se planira sinhronizacija
 
 import java.util.List;
@@ -16,25 +17,26 @@ public class EquipmentRepository {
 
     private final EquipmentDao equipmentDao;
     private final UserEquipmentDao userEquipmentDao;
-    // private final FirebaseFirestore db; // Opciono: Ako se oprema sinhronizuje sa Firestore-om
     private static final String TAG = "EquipmentRepository";
 
     public EquipmentRepository(Context context) {
         this.equipmentDao = new EquipmentDao(context);
         this.userEquipmentDao = new UserEquipmentDao(context);
-        // this.db = FirebaseFirestore.getInstance(); // Opciono
     }
 
-    // --- Metode za Equipment (baza svih tipova opreme) ---
 
     public interface EquipmentOperationListener {
         void onSuccess();
         void onFailure(String errorMessage);
     }
 
+    public void addEquipment(Equipment equipment, EquipmentOperationListener listener) {
+        addOrUpdateEquipment(equipment, listener);
+    }
+
     public void addOrUpdateEquipment(Equipment equipment, EquipmentOperationListener listener) {
         if (equipment.getId() == null || equipment.getId().isEmpty()) {
-            equipment.setId(UUID.randomUUID().toString()); // Generiši ID ako ne postoji
+            equipment.setId(UUID.randomUUID().toString());
         }
         if (equipmentDao.upsert(equipment)) {
             listener.onSuccess();
@@ -58,20 +60,41 @@ public class EquipmentRepository {
             listener.onFailure("Failed to delete equipment.");
         }
     }
+    
+    public UserEquipment getUserSpecificEquipment(String userId, String equipmentId) {
+        return userEquipmentDao.getUserSpecificEquipment(userId, equipmentId);
+    }
+    
+    public boolean addUserEquipment(UserEquipment userEquipment) {
+        return userEquipmentDao.upsert(userEquipment);
+    }
+    
+    public boolean updateUserEquipment(UserEquipment userEquipment) {
+        return userEquipmentDao.upsert(userEquipment);
+    }
+    
+    public void getAllUserEquipmentForUser(String userId, UserEquipmentOperationListener listener) {
+        List<UserEquipment> userEquipmentList = userEquipmentDao.getAllUserEquipmentForUser(userId);
+        if (userEquipmentList != null && !userEquipmentList.isEmpty()) {
+            listener.onSuccessList(userEquipmentList);
+        } else {
+            listener.onFailure("Korisnik nema opreme");
+        }
+    }
+    
 
-    // --- Metode za UserEquipment (inventar korisnika) ---
+    public List<UserEquipment> getAllUserEquipmentForUser(String userId) {
+        return userEquipmentDao.getAllUserEquipmentForUser(userId);
+    }
+
 
     public interface UserEquipmentOperationListener {
         void onSuccess(UserEquipment userEquipment);
-        void onSuccess(List<UserEquipment> userEquipmentList);
+        void onSuccessList(List<UserEquipment> userEquipmentList);
         void onFailure(String errorMessage);
     }
 
-    /**
-     * Dodaje novu opremu korisniku ili ažurira postojeću.
-     * Ako oprema već postoji i stackable je, povećava se količina/bonus.
-     * Ako je nova, kreira se novi unos.
-     */
+
     public void addOrUpdateUserEquipment(String userId, String equipmentId, int quantity, UserEquipmentOperationListener listener) {
         Equipment equipment = equipmentDao.getEquipment(equipmentId);
         if (equipment == null) {
@@ -82,33 +105,27 @@ public class EquipmentRepository {
         UserEquipment existingUserEquipment = userEquipmentDao.getUserSpecificEquipment(userId, equipmentId);
 
         if (existingUserEquipment != null) {
-            // Oprema već postoji kod korisnika
             if (equipment.isStackable()) {
-                // Ažuriraj količinu i/ili bonus
                 if (equipment.isConsumable()) {
                     existingUserEquipment.setQuantity(existingUserEquipment.getQuantity() + quantity);
                 } else {
-                    // Sabiranje bonusa za trajnu opremu, npr. oružje ili odeća
                     existingUserEquipment.setCurrentBonusValue(existingUserEquipment.getCurrentBonusValue() + equipment.getBonusValue() * quantity);
                 }
             } else {
-                // Ako nije stackable, možda želimo da blokiramo dodavanje ili da izbacimo grešku
                 listener.onFailure("User already has this non-stackable equipment.");
                 return;
             }
         } else {
-            // Nova oprema za korisnika
             existingUserEquipment = new UserEquipment(
                     UUID.randomUUID().toString(),
                     userId,
                     equipmentId,
                     quantity,
-                    false, // Nije aktivna po defaultu
-                    0,     // Nema preostalog trajanja dok se ne aktivira
+                    false,
                     0,
-                    equipment.getBonusValue() * quantity // Inicijalni bonus
+                    0,
+                    equipment.getBonusValue() * quantity
             );
-            // Poseban slučaj za odeću gde se sabira postotak odmah
             if (equipment.getType().equals("ARMOR") && equipment.isStackable()) {
                 existingUserEquipment.setCurrentBonusValue(equipment.getBonusValue() * quantity);
             }
@@ -122,9 +139,6 @@ public class EquipmentRepository {
     }
 
 
-    /**
-     * Aktivira opremu za korisnika.
-     */
     public void activateUserEquipment(String userEquipmentId, UserEquipmentOperationListener listener) {
         UserEquipment userEquipment = userEquipmentDao.getUserEquipment(userEquipmentId);
         if (userEquipment == null) {
@@ -142,7 +156,6 @@ public class EquipmentRepository {
             return;
         }
 
-        // Postavi aktivno stanje i inicijalizuj trajanje
         userEquipment.setActive(true);
         if (equipment.getDurationBattles() > 0) {
             userEquipment.setRemainingDurationBattles(equipment.getDurationBattles());
@@ -151,7 +164,6 @@ public class EquipmentRepository {
             userEquipment.setActivationTimestamp(System.currentTimeMillis());
         }
 
-        // Smanji quantity za potrošnu opremu (napitke) ako je aktivirana
         if (equipment.isConsumable() && userEquipment.getQuantity() > 0) {
             userEquipment.setQuantity(userEquipment.getQuantity() - 1);
         } else if (equipment.isConsumable() && userEquipment.getQuantity() == 0) {
@@ -167,10 +179,6 @@ public class EquipmentRepository {
         }
     }
 
-    /**
-     * Deaktivira opremu za korisnika.
-     * Često se koristi kada oprema istekne ili je jednokratna.
-     */
     public void deactivateUserEquipment(String userEquipmentId, UserEquipmentOperationListener listener) {
         UserEquipment userEquipment = userEquipmentDao.getUserEquipment(userEquipmentId);
         if (userEquipment == null) {
@@ -179,10 +187,9 @@ public class EquipmentRepository {
         }
 
         userEquipment.setActive(false);
-        userEquipment.setRemainingDurationBattles(0); // Reset trajanja
-        userEquipment.setActivationTimestamp(0); // Reset trajanja po danima
+        userEquipment.setRemainingDurationBattles(0);
+        userEquipment.setActivationTimestamp(0);
 
-        // Ako je oprema potrošena i nema je više, možemo je i obrisati iz inventara
         if (userEquipment.getQuantity() == 0 && equipmentDao.getEquipment(userEquipment.getEquipmentId()).isConsumable()) {
             if (userEquipmentDao.deleteUserEquipment(userEquipmentId)) {
                 listener.onSuccess((UserEquipment) null);
@@ -196,24 +203,24 @@ public class EquipmentRepository {
         }
     }
 
-    /**
-     * Dohvata svu opremu koju korisnik poseduje.
-     */
+    public void deleteUserEquipment(String userEquipmentId, UserEquipmentOperationListener listener) {
+        if (userEquipmentDao.deleteUserEquipment(userEquipmentId)) {
+            listener.onSuccess((UserEquipment) null);
+        } else {
+            listener.onFailure("Failed to delete user equipment.");
+        }
+    }
+
     public List<UserEquipment> getUserInventory(String userId) {
         return userEquipmentDao.getUserEquipmentForUser(userId);
     }
 
-    /**
-     * Smanjuje preostalo trajanje opreme po borbama.
-     * Trebalo bi da se poziva nakon svake borbe sa bosom.
-     */
     public void decrementEquipmentDuration(String userId) {
         List<UserEquipment> activeEquipment = getUserInventory(userId);
         for (UserEquipment ue : activeEquipment) {
             if (ue.isActive() && ue.getRemainingDurationBattles() > 0) {
                 ue.setRemainingDurationBattles(ue.getRemainingDurationBattles() - 1);
                 if (ue.getRemainingDurationBattles() <= 0) {
-                    // Oprema je istekla, deaktiviraj je
                     deactivateUserEquipment(ue.getId(), new UserEquipmentOperationListener() {
                         @Override
                         public void onSuccess(UserEquipment updatedUe) {
@@ -221,7 +228,8 @@ public class EquipmentRepository {
                         }
 
                         @Override
-                        public void onSuccess(List<UserEquipment> userEquipmentList) { /* Nije primenljivo ovde */ }
+                        public void onSuccessList(List<UserEquipment> userEquipmentList) { 
+                        }
 
                         @Override
                         public void onFailure(String errorMessage) {
@@ -229,16 +237,12 @@ public class EquipmentRepository {
                         }
                     });
                 } else {
-                    userEquipmentDao.upsert(ue); // Ažuriraj preostalo trajanje
+                    userEquipmentDao.upsert(ue);
                 }
             }
         }
     }
 
-    /**
-     * Računa ukupan bonus za određenog korisnika za specifičan tip bonusa.
-     * Npr. za PP, šansu za napad, novčiće.
-     */
     public double calculateTotalBonus(String userId, String bonusType) {
         double totalBonus = 0.0;
         List<UserEquipment> userInventory = getUserInventory(userId);
@@ -247,29 +251,81 @@ public class EquipmentRepository {
             if (ue.isActive()) {
                 Equipment eq = equipmentDao.getEquipment(ue.getEquipmentId());
                 if (eq != null && eq.getBonusType().equals(bonusType)) {
-                    // Proveri i trajanje po danima ako je relevantno
                     if (eq.getDurationDays() > 0) {
                         long elapsedDays = (System.currentTimeMillis() - ue.getActivationTimestamp()) / (1000 * 60 * 60 * 24);
                         if (elapsedDays >= eq.getDurationDays()) {
-                            // Oprema je istekla po danima, deaktiviraj je
                             deactivateUserEquipment(ue.getId(), new UserEquipmentOperationListener() {
                                 @Override
                                 public void onSuccess(UserEquipment updatedUe) {
                                     Log.d(TAG, "Equipment " + ue.getId() + " duration expired (days) and deactivated.");
                                 }
-                                @Override public void onSuccess(List<UserEquipment> userEquipmentList) {}
+                                
+                                @Override 
+                                public void onSuccessList(List<UserEquipment> userEquipmentList) {
+                                }
+                                
                                 @Override
                                 public void onFailure(String errorMessage) {
                                     Log.e(TAG, "Failed to deactivate expired equipment (days): " + errorMessage);
                                 }
                             });
-                            continue; // Preskoči ovu opremu jer je istekla
+                            continue;
                         }
                     }
-                    totalBonus += ue.getCurrentBonusValue(); // Koristi currentBonusValue jer on može biti sabran
+                    totalBonus += ue.getCurrentBonusValue();
                 }
             }
         }
         return totalBonus;
+    }
+
+    public com.example.dailyboss.domain.model.EquipmentDropResult getEquipmentDrop() {
+        Log.d(TAG, "Generating equipment drop");
+        
+        com.example.dailyboss.domain.model.EquipmentDropResult result = new com.example.dailyboss.domain.model.EquipmentDropResult();
+        
+        if (Math.random() < 0.5) {
+            String equipmentType = Math.random() < 0.5 ? "CLOTHING" : "WEAPON";
+            String equipmentId = getRandomEquipmentId(equipmentType);
+            String equipmentName = getEquipmentNameById(equipmentId);
+            
+            result.setDropped(true);
+            result.setEquipmentId(equipmentId);
+            result.setEquipmentName(equipmentName);
+            result.setEquipmentType(equipmentType);
+            result.setMessage("Dobili ste opremu: " + equipmentName);
+            
+            Log.d(TAG, "Equipment dropped: " + equipmentName + " (ID: " + equipmentId + ", Type: " + equipmentType + ")");
+        } else {
+            result.setDropped(false);
+            result.setMessage("Niste dobili opremu");
+            Log.d(TAG, "No equipment dropped");
+        }
+        
+        return result;
+    }
+
+    private String getRandomEquipmentId(String equipmentType) {
+        Log.d(TAG, "Getting random equipment ID for type: " + equipmentType);
+        
+        String[] clothingIds = {"gloves", "shield", "boots"};
+        String[] weaponIds = {"sword", "bow"};
+        
+        String[] ids = "CLOTHING".equals(equipmentType) ? clothingIds : weaponIds;
+        String selectedId = ids[(int) (Math.random() * ids.length)];
+        
+        Log.d(TAG, "Selected equipment ID: " + selectedId);
+        return selectedId;
+    }
+
+    private String getEquipmentNameById(String equipmentId) {
+        switch (equipmentId) {
+            case "gloves": return "Rukavice";
+            case "shield": return "Štit";
+            case "boots": return "Čizme";
+            case "sword": return "Mač";
+            case "bow": return "Luk i Strela";
+            default: return "Nepoznata Oprema";
+        }
     }
 }

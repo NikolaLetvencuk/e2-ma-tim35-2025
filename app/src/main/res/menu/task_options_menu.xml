@@ -17,4 +17,8 @@
         android:id="@+id/action_active"
         android:title="Aktivno" />
 
+    <item
+        android:id="@+id/action_remove"
+        android:title="Obriši" />
+
 </menu>

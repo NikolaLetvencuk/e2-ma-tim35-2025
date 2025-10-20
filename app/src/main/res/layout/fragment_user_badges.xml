@@ -5,16 +5,6 @@
     android:layout_height="wrap_content"
     android:padding="8dp">
 
-    <!-- Broj bedževa -->
-    <TextView
-        android:id="@+id/tvTotalBadges"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Bedževi: 0"
-        android:textStyle="bold"
-        android:textSize="16sp"
-        android:layout_marginBottom="8dp"/>
-
     <!-- RecyclerView za bedževe -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvBadges"

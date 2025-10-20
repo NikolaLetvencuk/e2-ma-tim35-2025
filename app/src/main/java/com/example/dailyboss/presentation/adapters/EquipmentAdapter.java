@@ -25,25 +25,39 @@ public class EquipmentAdapter extends RecyclerView.Adapter<EquipmentAdapter.Equi
     private final List<UserEquipment> userEquipmentList;
     private final List<Equipment> allEquipmentList;
     private final OnEquipmentActionListener listener;
+    private final String currentUserId;
 
     public interface OnEquipmentActionListener {
         void onToggleActive(UserEquipment userEquipment, boolean isActive);
+        void onUpgradeWeapon(UserEquipment userEquipment, Equipment equipment);
     }
 
-    private static final String CURRENT_USER_ID = "n43N7E2SWtYMDHaJcHcjHzKs1123";
-
     public EquipmentAdapter(Context context, List<UserEquipment> allUserEquipment, List<Equipment> allEquipmentList,
-                            OnEquipmentActionListener listener) {
+                            OnEquipmentActionListener listener, String currentUserId) {
         this.context = context;
         this.allEquipmentList = allEquipmentList;
         this.listener = listener;
-        // Filtriramo samo opremu trenutnog korisnika
+        this.currentUserId = currentUserId;
         this.userEquipmentList = new ArrayList<>();
         for (UserEquipment ue : allUserEquipment) {
-            if (CURRENT_USER_ID.equals(ue.getUserId())) {
+            if (currentUserId.equals(ue.getUserId())) {
                 this.userEquipmentList.add(ue);
             }
         }
+    }
+
+    public void updateData(List<UserEquipment> newUserEquipment, List<Equipment> newAllEquipment) {
+        android.util.Log.d("EquipmentAdapter", "Ažuriram podatke za userId: " + currentUserId + ", primljeno opreme: " + newUserEquipment.size());
+        this.userEquipmentList.clear();
+        for (UserEquipment ue : newUserEquipment) {
+            android.util.Log.d("EquipmentAdapter", "Proveravam opremu userId: " + ue.getUserId() + " vs currentUserId: " + currentUserId);
+            if (currentUserId.equals(ue.getUserId())) {
+                this.userEquipmentList.add(ue);
+                android.util.Log.d("EquipmentAdapter", "Dodana oprema: " + ue.getEquipmentId());
+            }
+        }
+        android.util.Log.d("EquipmentAdapter", "Ukupno opreme u adapteru: " + this.userEquipmentList.size());
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -62,7 +76,6 @@ public class EquipmentAdapter extends RecyclerView.Adapter<EquipmentAdapter.Equi
             holder.equipmentName.setText(equipment.getName());
             holder.equipmentDescription.setText(equipment.getDescription());
 
-            // Prikaz ikonice iz iconPath
             if (equipment.getIconPath() != null && !equipment.getIconPath().isEmpty()) {
                 int drawableId = context.getResources().getIdentifier(
                         equipment.getIconPath(), "drawable", context.getPackageName());
@@ -75,7 +88,6 @@ public class EquipmentAdapter extends RecyclerView.Adapter<EquipmentAdapter.Equi
                 holder.equipmentIcon.setImageResource(R.drawable.ic_launcher_background);
             }
 
-            // Prikaz količine i statusa
             String statusText;
             if (equipment.isConsumable()) {
                 statusText = "Količina: " + userEquipment.getQuantity();
@@ -86,28 +98,41 @@ public class EquipmentAdapter extends RecyclerView.Adapter<EquipmentAdapter.Equi
             }
 
             if (equipment.getBonusType() != null && equipment.getBonusValue() > 0) {
-                statusText += "\nBonus: " + String.format("%.0f", equipment.getBonusValue() * 100) + "% " + equipment.getBonusType().replace("_", " ");
+                if (equipment.getId().equals("sword") || equipment.getId().equals("bow")) {
+                    statusText += "\nBonus: " + String.format("%.2f", userEquipment.getCurrentBonusValue() * 100) + "% " + equipment.getBonusType().replace("_", " ");
+                } else {
+                    statusText += "\nBonus: " + String.format("%.0f", equipment.getBonusValue() * 100) + "% " + equipment.getBonusType().replace("_", " ");
+                }
             }
             if (equipment.getDurationBattles() > 0) {
                 statusText += "\nPreostalo borbi: " + userEquipment.getRemainingDurationBattles();
             } else if (equipment.getDurationDays() > 0) {
-                statusText += "\nTraje X dana"; // Može se izračunati po timestamp-u
+                statusText += "\nTraje X dana";
             }
 
             holder.equipmentQuantityStatus.setText(statusText);
 
-            // Switch za aktivaciju
             holder.toggleActiveSwitch.setOnCheckedChangeListener(null);
             holder.toggleActiveSwitch.setChecked(userEquipment.isActive());
             holder.toggleActiveSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 if (listener != null) listener.onToggleActive(userEquipment, isChecked);
             });
 
-            // Vidljivost switch-a
             if ((equipment.isConsumable() && equipment.getDurationBattles() > 0) || !equipment.isConsumable()) {
                 holder.toggleActiveSwitch.setVisibility(View.VISIBLE);
             } else {
                 holder.toggleActiveSwitch.setVisibility(View.GONE);
+            }
+
+            if (equipment.getId().equals("sword") || equipment.getId().equals("bow")) {
+                holder.btnUpgrade.setVisibility(View.VISIBLE);
+                holder.btnUpgrade.setOnClickListener(v -> {
+                    if (listener != null) {
+                        listener.onUpgradeWeapon(userEquipment, equipment);
+                    }
+                });
+            } else {
+                holder.btnUpgrade.setVisibility(View.GONE);
             }
 
         } else {
@@ -135,6 +160,7 @@ public class EquipmentAdapter extends RecyclerView.Adapter<EquipmentAdapter.Equi
         ImageView equipmentIcon;
         TextView equipmentName, equipmentDescription, equipmentQuantityStatus;
         Switch toggleActiveSwitch;
+        android.widget.Button btnUpgrade;
 
         public EquipmentViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -143,20 +169,8 @@ public class EquipmentAdapter extends RecyclerView.Adapter<EquipmentAdapter.Equi
             equipmentDescription = itemView.findViewById(R.id.equipment_description);
             equipmentQuantityStatus = itemView.findViewById(R.id.equipment_quantity_status);
             toggleActiveSwitch = itemView.findViewById(R.id.equipment_toggle_active);
+            btnUpgrade = itemView.findViewById(R.id.btn_upgrade);
         }
-    }
-
-    // Unutar EquipmentAdapter klase
-    public void updateData(List<UserEquipment> newUserEquipmentList, List<Equipment> newAllEquipmentList) {
-        // Filtriramo samo opremu za CURRENT_USER_ID
-        this.userEquipmentList.clear();
-        for (UserEquipment ue : newUserEquipmentList) {
-            if (CURRENT_USER_ID.equals(ue.getUserId())) {
-                this.userEquipmentList.add(ue);
-            }
-        }
-        this.allEquipmentList.clear();
-        this.allEquipmentList.addAll(newAllEquipmentList);
-        notifyDataSetChanged();
     }
 }
+

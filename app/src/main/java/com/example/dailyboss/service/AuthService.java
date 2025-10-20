@@ -6,8 +6,10 @@ import android.util.Log;
 import com.example.dailyboss.data.SharedPreferencesHelper;
 import com.example.dailyboss.data.dao.UserDao;
 import com.example.dailyboss.data.repository.UserRepository;
+import com.example.dailyboss.data.repository.UserProfileRepository;
 import com.example.dailyboss.data.repository.UserStatisticRepository;
 import com.example.dailyboss.domain.model.User;
+import com.example.dailyboss.domain.model.UserProfile;
 import com.example.dailyboss.domain.model.UserStatistic;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
@@ -19,15 +21,18 @@ import java.util.UUID;
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final UserDao userDao; // Opet sam dodao userDao, jer ga koristiš direktno ovde
+    private final UserDao userDao;
     private final FirebaseAuth firebaseAuth;
     private final Context context;
+    private final UserProfileRepository userProfileRepository;
     private final UserStatisticRepository userStatisticRepository;
+
     public AuthService(Context context) {
-        this.userRepository = new UserRepository(context); // ✨ PROMENJENO: Prosleđuje context
-        this.userDao = new UserDao(context); // Inicijalizuj UserDao
+        this.userRepository = new UserRepository(context);
+        this.userDao = new UserDao(context);
         this.firebaseAuth = FirebaseAuth.getInstance();
-        this.userStatisticRepository = new UserStatisticRepository(context); // Novo
+        this.userProfileRepository = new UserProfileRepository(context);
+        this.userStatisticRepository = new UserStatisticRepository(context);
         this.context = context;
     }
 
@@ -47,27 +52,57 @@ public class AuthService {
                             null,
                             username,
                             email,
-                            password, // Lozinka se ne čuva u Firestore/modelu
+                            password,
                             selectedAvatar,
                             false,
-                            System.currentTimeMillis()
+                            System.currentTimeMillis(),
+                            null
                     );
 
                     userRepository.registerUser(email, password, newUser, new UserRepository.UserDataListener() {
                         @Override
                         public void onSuccess(User registeredUser) {
-                            // ✅ Kreiranje osnovne statistike za novog korisnika
-                            UserStatistic stat = new UserStatistic(
-                                    UUID.randomUUID().toString(),                        // id → može da bude auto-generated
-                                    registeredUser.getId(),      // FK na korisnika
-                                    0, 0,                        // completedTasks, failedTasks
-                                    1,                            // level početni
-                                    0,                            // experiencePoints
-                                    0,                            // winStreak
-                                    System.currentTimeMillis()    // lastActiveTimestamp
+                            UserProfile stat = new UserProfile(
+                                    UUID.randomUUID().toString(),
+                                    registeredUser.getId(),
+                                    0, 0,
+                                    1,
+                                    0,
+                                    0,
+                                    System.currentTimeMillis()
                             );
 
-                            boolean statSaved = userStatisticRepository.saveOrUpdate(stat);
+                            UserStatistic stats = new UserStatistic(
+                                    UUID.randomUUID().toString(),
+                                    registeredUser.getId(),
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    System.currentTimeMillis(),
+                                    0,
+                                    0,
+                                    0,
+                                    300,
+                                    "Novajlija"
+                            );
+
+                            boolean statSaved = userProfileRepository.saveOrUpdate(stat);
+                            userStatisticRepository.upsertUserStatistic(stats, new UserStatisticRepository.UserStatisticDataListener() {
+                                @Override
+                                public void onSuccess(UserStatistic s) {
+                                    Log.d("TAG", "Uspešno sačuvana ažurirana statistika.");
+                                }
+                                @Override
+                                public void onFailure(Exception e) {
+                                    Log.e("TAG", "Greška pri čuvanju ažurirane statistike: " + e.getMessage());
+                                }
+                            });
                             if (!statSaved) {
                                 Log.w("AuthService", "Neuspešno kreiranje statistike korisnika nakon registracije.");
                             }
@@ -99,19 +134,19 @@ public class AuthService {
                     if (task.isSuccessful()) {
                         FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
                         if (firebaseUser != null) {
+
                             if (!firebaseUser.isEmailVerified()) {
                                 listener.onFailure("Molimo vas da prvo verifikujete svoj email nalog.");
                                 return;
                             }
 
-                            // Dohvati korisničke podatke iz Firestore-a i sačuvaj ih u SQLite
+
                             userRepository.getUserData(firebaseUser.getUid(), new UserRepository.UserDataListener() {
                                 @Override
-                                public void onSuccess(User user) { // ✨ Prima User objekat
-                                    // ✅ Sačuvaj ulogovanog korisnika u SharedPreferences
+                                public void onSuccess(User user) {
                                     SharedPreferencesHelper prefs = new SharedPreferencesHelper(context);
                                     prefs.saveLoggedInUser(user.getId(), user.getUsername()); // ili getName()
-
+                                    Log.d("TAG", "onSuccess: " + user.getUsername() + user.getAllianceId());
                                     // ✅ Upsert u lokalnu bazu
                                     if (userDao.upsert(user)) {
                                         listener.onSuccess("Uspešna prijava!");
@@ -140,10 +175,7 @@ public class AuthService {
                 });
     }
 
-    // Metoda za odjavu
     public void logout() {
         firebaseAuth.signOut();
-        // Opcionalno: Obriši lokalne podatke korisnika iz SQLite-a nakon odjave
-        // userDao.deleteAllUsers(); // Ako želiš da obrišeš sve
     }
 }

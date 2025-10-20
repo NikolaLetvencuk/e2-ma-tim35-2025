@@ -17,16 +17,12 @@ public class UserEquipmentRepository {
         this.userEquipmentDao = new UserEquipmentDao(context);
     }
 
-    // Interfejs callback-a za operacije nad UserEquipment
     public interface EquipmentDataListener {
         void onSuccess(UserEquipment userEquipment);
         void onSuccess(List<UserEquipment> userEquipmentList);
         void onFailure(Exception e);
     }
 
-    /**
-     * Dodavanje ili ažuriranje korisničke opreme
-     */
     public void upsertUserEquipment(UserEquipment userEquipment, EquipmentDataListener listener) {
         try {
             boolean success = userEquipmentDao.upsert(userEquipment);
@@ -41,9 +37,6 @@ public class UserEquipmentRepository {
         }
     }
 
-    /**
-     * Dohvatanje pojedinačne opreme po ID-u
-     */
     public void getUserEquipmentById(String userEquipmentId, EquipmentDataListener listener) {
         try {
             UserEquipment userEquipment = userEquipmentDao.getUserEquipment(userEquipmentId);
@@ -58,9 +51,7 @@ public class UserEquipmentRepository {
         }
     }
 
-    /**
-     * Dohvatanje sve opreme za jednog korisnika
-     */
+
     public void getAllUserEquipmentForUser(String userId, EquipmentDataListener listener) {
         try {
             List<UserEquipment> equipmentList = userEquipmentDao.getUserEquipmentForUser(userId);
@@ -71,9 +62,6 @@ public class UserEquipmentRepository {
         }
     }
 
-    /**
-     * Brisanje korisničke opreme po ID-u
-     */
     public void deleteUserEquipment(String userEquipmentId, EquipmentDataListener listener) {
         try {
             boolean deleted = userEquipmentDao.deleteUserEquipment(userEquipmentId);
@@ -88,9 +76,6 @@ public class UserEquipmentRepository {
         }
     }
 
-    /**
-     * Dohvatanje specifične opreme korisnika (ako postoji samo jedna instanca)
-     */
     public void getUserSpecificEquipment(String userId, String equipmentId, EquipmentDataListener listener) {
         try {
             UserEquipment userEquipment = userEquipmentDao.getUserSpecificEquipment(userId, equipmentId);

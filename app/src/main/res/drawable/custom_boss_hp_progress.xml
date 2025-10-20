@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- POZADINA (TRACK) - Ovo je dio koji predstavlja "prazan" dio HP bara -->
+    <item android:id="@android:id/background">
+        <shape>
+            <corners android:radius="5dp" /> <!-- Pretpostavljam da je bio neki radius za zaobljene uglove -->
+            <solid android:color="#30FFFFFF" /> <!-- Svjetlo siva / transparentna boja pozadine -->
+        </shape>
+    </item>
+
+    <!-- SEKUNDARNI PROGRESS (ako ga koristiš, inače ga možeš izostaviti) -->
+    <item android:id="@android:id/secondaryProgress">
+        <clip>
+            <shape>
+                <corners android:radius="5dp" />
+                <solid android:color="#60FF0000" /> <!-- Neka svjetlija crvena za sekundarni progress -->
+            </shape>
+        </clip>
+    </item>
+
+    <!-- GLAVNI PROGRESS (FILLED) - Ovo je dio koji prikazuje trenutni HP -->
+    <item android:id="@android:id/progress">
+        <clip>
+            <shape>
+                <corners android:radius="5dp" /> <!-- Isti radius kao gore za zaobljene uglove -->
+                <solid android:color="#FF0000" /> <!-- Čista crvena boja za HP progress -->
+            </shape>
+        </clip>
+    </item>
+
+</layer-list>

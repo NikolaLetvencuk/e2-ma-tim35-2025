@@ -1,4 +1,3 @@
-// CreateTaskFragment.java
 package com.example.dailyboss.presentation.fragments;
 
 import android.app.DatePickerDialog;
@@ -16,6 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.Spinner;
+import android.widget.Toast; // Import Toast for displaying messages
 
 import com.example.dailyboss.data.dto.TaskDetailDto;
 import com.example.dailyboss.domain.enums.FrequencyUnit;
@@ -43,6 +43,12 @@ public class CreateTaskFragment extends Fragment {
     private Spinner spinnerCategory;
     private CategoryRepositoryImpl categoryRepositoryImpl;
     private TaskTemplateRepositoryImpl taskTemplateRepositoryImpl;
+
+    private EditText etTaskTitle;
+    private CheckBox checkBoxIsRepeated;
+    private LinearLayout layoutRepeatOptions;
+    private RadioGroup radioGroupDifficulty;
+    private RadioGroup radioGroupImportance;
 
     private static final String ARG_TASK_TEMPLATE = "task_template";
     private TaskDetailDto taskToEdit = null;
@@ -81,23 +87,23 @@ public class CreateTaskFragment extends Fragment {
         spinnerCategory = view.findViewById(R.id.spinnerCategory);
         populateCategorySpinner();
 
-        EditText etTaskTitle = view.findViewById(R.id.editTextTitle);
+        etTaskTitle = view.findViewById(R.id.editTextTitle);
         EditText etTaskDescription = view.findViewById(R.id.editTextDescription);
         Button btnCreateTask = view.findViewById(R.id.btnCreateTask);
         MaterialToolbar toolbar = view.findViewById(R.id.toolbar);
         etStartDate = view.findViewById(R.id.editTextStartDate);
         etEndDate = view.findViewById(R.id.editTextEndDate);
         etStartTime = view.findViewById(R.id.editTextStartTime);
-        CheckBox checkBoxIsRepeated = view.findViewById(R.id.checkBoxIsRepeated);
-        LinearLayout layoutRepeatOptions = view.findViewById(R.id.layoutRepeatOptions);
+        checkBoxIsRepeated = view.findViewById(R.id.checkBoxIsRepeated);
+        layoutRepeatOptions = view.findViewById(R.id.layoutRepeatOptions);
         etRepeatInterval = view.findViewById(R.id.editTextRepeatInterval);
         etRepeatUnit = view.findViewById(R.id.radioGroupRepeatUnit);
-        RadioGroup radioGroupDifficulty = view.findViewById(R.id.radioGroupDifficulty);
-        RadioGroup radioGroupImportance = view.findViewById(R.id.radioGroupImportance);
+        radioGroupDifficulty = view.findViewById(R.id.radioGroupDifficulty);
+        radioGroupImportance = view.findViewById(R.id.radioGroupImportance);
 
         calendar = Calendar.getInstance();
 
-       if (taskToEdit != null) {
+        if (taskToEdit != null) {
             toolbar.setTitle("Izmeni Zadatak");
             btnCreateTask.setText("Sačuvaj izmene");
 
@@ -172,6 +178,8 @@ public class CreateTaskFragment extends Fragment {
                 layoutRepeatOptions.setVisibility(View.VISIBLE);
             } else {
                 layoutRepeatOptions.setVisibility(View.GONE);
+                etRepeatInterval.setText(""); // Clear repeat interval if not repeated
+                ((RadioButton) view.findViewById(R.id.radioDay)).setChecked(true); // Reset to default
             }
         });
 
@@ -180,17 +188,24 @@ public class CreateTaskFragment extends Fragment {
         });
 
         btnCreateTask.setOnClickListener(v -> {
+            if (!validateInput()) {
+                return; // Stop if input is not valid
+            }
+
             Category selectedCategory = (Category) spinnerCategory.getSelectedItem();
             String title = etTaskTitle.getText().toString();
             String description = etTaskDescription.getText().toString();
             String executionTime = etStartTime.getText().toString();
 
             int frequencyInterval = 1;
-            try {
-                frequencyInterval = Integer.parseInt(etRepeatInterval.getText().toString());
-            } catch (NumberFormatException e) {
-                frequencyInterval = 1;
+            if (checkBoxIsRepeated.isChecked()) {
+                try {
+                    frequencyInterval = Integer.parseInt(etRepeatInterval.getText().toString());
+                } catch (NumberFormatException e) {
+                    frequencyInterval = 1; // Default to 1 if parsing fails (should be caught by validation)
+                }
             }
+
 
             FrequencyUnit frequencyUnit = getSelectedFrequencyUnit(etRepeatUnit);
 
@@ -198,7 +213,7 @@ public class CreateTaskFragment extends Fragment {
             long startDateMillis = startDateCalendar != null ? startDateCalendar.getTimeInMillis() : 0;
 
             long endDateMillis = 0;
-            if (!etEndDate.getText().toString().isEmpty()) {
+            if (checkBoxIsRepeated.isChecked() && !etEndDate.getText().toString().isEmpty()) {
                 Calendar endDateCalendar = getDateFromString(etEndDate.getText().toString());
                 if (endDateCalendar != null) {
                     endDateMillis = endDateCalendar.getTimeInMillis();
@@ -228,8 +243,10 @@ public class CreateTaskFragment extends Fragment {
 
                 if (success) {
                     Log.d("TaskTemplate", "TaskTemplate ažuriran uspešno!");
+                    Toast.makeText(getContext(), "Zadatak uspešno ažuriran!", Toast.LENGTH_SHORT).show();
                 } else {
                     Log.e("TaskTemplate", "Greška pri ažuriranju TaskTemplate-a");
+                    Toast.makeText(getContext(), "Greška pri ažuriranju zadatka!", Toast.LENGTH_SHORT).show();
                 }
 
             } else {
@@ -249,8 +266,10 @@ public class CreateTaskFragment extends Fragment {
 
                 if (success) {
                     Log.d("TaskTemplate", "TaskTemplate i TaskInstance kreirani uspešno!");
+                    Toast.makeText(getContext(), "Zadatak uspešno kreiran!", Toast.LENGTH_SHORT).show();
                 } else {
                     Log.e("TaskTemplate", "Greška pri kreiranju TaskTemplate-a");
+                    Toast.makeText(getContext(), "Greška pri kreiranju zadatka!", Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -258,9 +277,70 @@ public class CreateTaskFragment extends Fragment {
         });
     }
 
+    private boolean validateInput() {
+        if (etTaskTitle.getText().toString().trim().isEmpty()) {
+            etTaskTitle.setError("Naslov je obavezan!");
+            Toast.makeText(getContext(), "Naslov je obavezan!", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (spinnerCategory.getSelectedItem() == null) {
+            Toast.makeText(getContext(), "Kategorija je obavezna!", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (etStartDate.getText().toString().trim().isEmpty()) {
+            etStartDate.setError("Datum početka je obavezan!");
+            Toast.makeText(getContext(), "Datum početka je obavezan!", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (etStartTime.getText().toString().trim().isEmpty()) {
+            etStartTime.setError("Vreme početka je obavezno!");
+            Toast.makeText(getContext(), "Vreme početka je obavezno!", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (checkBoxIsRepeated.isChecked()) {
+            if (etRepeatInterval.getText().toString().trim().isEmpty()) {
+                etRepeatInterval.setError("Interval ponavljanja je obavezan za ponavljajuće zadatke!");
+                Toast.makeText(getContext(), "Interval ponavljanja je obavezan!", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+            try {
+                int interval = Integer.parseInt(etRepeatInterval.getText().toString().trim());
+                if (interval <= 0) {
+                    etRepeatInterval.setError("Interval ponavljanja mora biti veći od 0!");
+                    Toast.makeText(getContext(), "Interval ponavljanja mora biti veći od 0!", Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+            } catch (NumberFormatException e) {
+                etRepeatInterval.setError("Interval ponavljanja mora biti broj!");
+                Toast.makeText(getContext(), "Interval ponavljanja mora biti broj!", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+            if (etRepeatUnit.getCheckedRadioButtonId() == -1) {
+                Toast.makeText(getContext(), "Jedinica ponavljanja (dan/nedelja) je obavezna!", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        }
+
+        if (radioGroupDifficulty.getCheckedRadioButtonId() == -1) {
+            Toast.makeText(getContext(), "Težina zadatka je obavezna!", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        if (radioGroupImportance.getCheckedRadioButtonId() == -1) {
+            Toast.makeText(getContext(), "Važnost zadatka je obavezna!", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        return true;
+    }
+
     private TaskDifficulty getSelectedDifficulty(RadioGroup radioGroupDifficulty) {
         int selectedDifficultyId = radioGroupDifficulty.getCheckedRadioButtonId();
-        TaskDifficulty difficulty = TaskDifficulty.EASY; // default
+        TaskDifficulty difficulty = TaskDifficulty.EASY; // default if nothing is selected
 
         if (selectedDifficultyId != -1) {
             if (selectedDifficultyId == R.id.radioDifficultyVeryEasy) difficulty = TaskDifficulty.VERY_EASY;
@@ -273,7 +353,7 @@ public class CreateTaskFragment extends Fragment {
 
     private TaskImportance getSelectedImportance(RadioGroup radioGroupImportance) {
         int selectedImportanceId = radioGroupImportance.getCheckedRadioButtonId();
-        TaskImportance importance = TaskImportance.NORMAL; // default
+        TaskImportance importance = TaskImportance.NORMAL; // default if nothing is selected
 
         if (selectedImportanceId != -1) {
             if (selectedImportanceId == R.id.radioImportanceNormal) importance = TaskImportance.NORMAL;
@@ -289,7 +369,7 @@ public class CreateTaskFragment extends Fragment {
         if (selectedUnitId != -1 && selectedUnitId == R.id.radioWeek) {
             return FrequencyUnit.WEEK;
         }
-        return FrequencyUnit.DAY;
+        return FrequencyUnit.DAY; // Default to DAY if nothing or Day is selected
     }
 
     private String formatDate(long millis) {
@@ -314,7 +394,7 @@ public class CreateTaskFragment extends Fragment {
         } else if (group.getId() == R.id.radioGroupImportance) {
             if (enumName.equals(TaskImportance.NORMAL.name())) idToSelect = R.id.radioImportanceNormal;
             else if (enumName.equals(TaskImportance.IMPORTANT.name())) idToSelect = R.id.radioImportanceImportant;
-            else if (enumName.equals(TaskImportance.EXTREMELY_IMPORTANT.name())) idToSelect = R.id.radioImportanceExtreme; // Proverite da li je ID radioImportanceExtreme
+            else if (enumName.equals(TaskImportance.EXTREMELY_IMPORTANT.name())) idToSelect = R.id.radioImportanceExtreme;
             else if (enumName.equals(TaskImportance.SPECIAL.name())) idToSelect = R.id.radioImportanceSpecial;
         }
 
@@ -369,6 +449,15 @@ public class CreateTaskFragment extends Fragment {
         int month = calendar.get(Calendar.MONTH);
         int day = calendar.get(Calendar.DAY_OF_MONTH);
 
+        if (!editText.getText().toString().isEmpty()) {
+            Calendar currentSelectedDate = getDateFromString(editText.getText().toString());
+            if (currentSelectedDate != null) {
+                year = currentSelectedDate.get(Calendar.YEAR);
+                month = currentSelectedDate.get(Calendar.MONTH);
+                day = currentSelectedDate.get(Calendar.DAY_OF_MONTH);
+            }
+        }
+
         DatePickerDialog datePickerDialog = new DatePickerDialog(getContext(),
                 (view, selectedYear, selectedMonth, selectedDay) -> {
                     String selectedDate = String.format(Locale.getDefault(), "%02d/%02d/%d", selectedDay, selectedMonth + 1, selectedYear);
@@ -389,6 +478,16 @@ public class CreateTaskFragment extends Fragment {
     private void showTimePicker() {
         int hour = calendar.get(Calendar.HOUR_OF_DAY);
         int minute = calendar.get(Calendar.MINUTE);
+
+        if (!etStartTime.getText().toString().isEmpty()) {
+            try {
+                String[] timeParts = etStartTime.getText().toString().split(":");
+                hour = Integer.parseInt(timeParts[0]);
+                minute = Integer.parseInt(timeParts[1]);
+            } catch (Exception e) {
+                // Use current time if parsing fails
+            }
+        }
 
         TimePickerDialog timePickerDialog = new TimePickerDialog(getContext(),
                 (view, selectedHour, selectedMinute) -> {

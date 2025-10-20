@@ -110,18 +110,22 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="12dp"
             app:cardCornerRadius="16dp"
             app:cardElevation="6dp"
             app:cardBackgroundColor="@color/card_background">
 
             <LinearLayout
-                android:orientation="horizontal"
+                android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingTop="16dp"
-                android:paddingBottom="16dp"
-                android:gravity="center">
+                android:padding="16dp">
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center">
 
                 <LinearLayout
                     android:orientation="vertical"
@@ -140,7 +144,6 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Experience Points"
                         android:textSize="12sp"
                         android:textColor="@color/text_dark"/>
                 </LinearLayout>
@@ -162,7 +165,6 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Power Points"
                         android:textSize="12sp"
                         android:textColor="@color/text_dark"/>
                 </LinearLayout>
@@ -184,10 +186,23 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Novčići"
                         android:textSize="12sp"
                         android:textColor="@color/text_dark"/>
                 </LinearLayout>
+            </LinearLayout>
+
+                <!-- Dugme za prikaz napredovanja -->
+                <Button
+                    android:id="@+id/btnViewLevelProgress"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="📊 Pogledaj Napredovanje"
+                    android:textSize="14sp"
+                    android:backgroundTint="@color/calendar_black"
+                    android:textColor="@android:color/white"
+                    app:cornerRadius="8dp"/>
+
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 

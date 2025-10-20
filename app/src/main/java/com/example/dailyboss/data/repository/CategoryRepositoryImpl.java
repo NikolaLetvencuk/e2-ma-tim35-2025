@@ -5,8 +5,11 @@ import android.graphics.Color;
 
 import com.example.dailyboss.data.SharedPreferencesHelper;
 import com.example.dailyboss.data.dao.CategoryDao;
+import com.example.dailyboss.data.dao.UserCategoryStatisticDao;
 import com.example.dailyboss.domain.model.Category;
+import com.example.dailyboss.domain.model.UserCategoryStatistic;
 import com.example.dailyboss.domain.repository.ICategoryRepository;
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.List;
 import java.util.UUID;
@@ -14,12 +17,14 @@ import java.util.UUID;
 public class CategoryRepositoryImpl implements ICategoryRepository {
 
     private final CategoryDao categoryDao;
+    private final UserCategoryStatisticDao userCategoryStatisticDao;
     private final Context context;
     private final SharedPreferencesHelper prefs;
     private String userId;
 
     public CategoryRepositoryImpl(Context context) {
         this.categoryDao = new CategoryDao(context);
+        this.userCategoryStatisticDao = new UserCategoryStatisticDao(context);
         this.prefs = new SharedPreferencesHelper(context);
         this.context = context.getApplicationContext();
         this.userId = prefs.getLoggedInUserId();
@@ -39,17 +44,19 @@ public class CategoryRepositoryImpl implements ICategoryRepository {
         Category category = new Category(id, color, name, userId);
         android.util.Log.d("CategoryService",
                 "Dodajem kategoriju: ID=" + category.getId() + ", Name=" + category.getName() + ", Color=" + category.getColor());
+        UserCategoryStatistic userCategoryStatistic = new UserCategoryStatistic(UUID.randomUUID().toString(), userId, id, 0, name);
+        userCategoryStatisticDao.upsert(userCategoryStatistic);
         return categoryDao.insert(category);
     }
 
     @Override
     public List<Category> getAllCategories() {
-        return categoryDao.getAll();
+        return categoryDao.getAllByUserId(userId);
     }
 
     @Override
     public boolean updateCategoryColor(String id, String newColor) throws IllegalArgumentException {
-        List<Category> categories = categoryDao.getAll();
+        List<Category> categories = categoryDao.getAllByUserId(userId);
         for (Category category : categories) {
             if (category.getColor().equalsIgnoreCase(newColor) && !category.getId().equals(id)) {
                 throw new IllegalArgumentException("Color has been already taken");
@@ -66,7 +73,7 @@ public class CategoryRepositoryImpl implements ICategoryRepository {
     private static final double COLOR_THRESHOLD = 20.0;
 
     private boolean isColorSimilar(String newColorHex) {
-        List<String> existingColors = categoryDao.getAllColors();
+        List<String> existingColors = categoryDao.getAllColors(userId);
         int newColorInt = Color.parseColor(newColorHex);
 
         int newR = Color.red(newColorInt);

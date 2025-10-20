@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/background_primary">
+
+    <!-- Zaglavlje saveza -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface_primary"
+        android:padding="16dp">
+
+        <TextView
+            android:id="@+id/tvAllianceName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🛡️ Ime Saveza"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true" />
+
+        <!-- Akciona dugmad za savez (Napusti/Ukini) -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true">
+
+            <Button
+                android:id="@+id/btnLeaveAlliance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Napusti Savez"
+                android:textColor="@color/text_primary"
+                android:backgroundTint="@color/red"
+                android:visibility="gone"
+                app:cornerRadius="8dp"
+                android:layout_marginEnd="8dp"/>
+
+            <Button
+                android:id="@+id/btnDisbandAlliance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ukini Savez"
+                android:textColor="@color/text_primary"
+                android:backgroundTint="@color/red"
+                android:visibility="gone"
+                app:cornerRadius="8dp" />
+        </LinearLayout>
+    </RelativeLayout>
+
+    <!-- Opis i vođa saveza -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/card_background"
+        android:padding="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:elevation="4dp">
+
+        <TextView
+            android:id="@+id/tvAllianceLeaderLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Vođa saveza:"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary" />
+
+        <TextView
+            android:id="@+id/tvAllianceLeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Korisničko Ime Vođe"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/tvCountMembers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Članovi saveza: 0"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginTop="8dp"/>
+
+    </LinearLayout>
+
+    <!-- Lista članova saveza -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvAllianceMembers"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="8dp"
+        android:layout_marginTop="8dp"/>
+
+    <!-- Glavno dugme za specijalnu misiju (Pokreni/Pregledaj) -->
+    <Button
+        android:id="@+id/btnMainSpecialMissionAction"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Akcija Specijalne Misije"
+        android:textColor="@color/text_primary"
+        android:backgroundTint="@color/button_primary"
+    android:padding="16dp"
+    android:layout_margin="16dp"
+    android:visibility="gone"
+    app:cornerRadius="8dp" />
+
+    <!-- Dugme za otvaranje četa ili kreiranje saveza -->
+    <Button
+        android:id="@+id/btnAllianceAction"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Otvori Ćaskanje"
+        android:textColor="@color/text_primary"
+        android:backgroundTint="@color/button_primary"
+        android:padding="16dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="16dp"
+        app:cornerRadius="8dp" />
+
+</LinearLayout>

@@ -51,13 +51,36 @@ public class CategoryDao {
         cursor.close();
         return  list;
     }
-
-    public boolean existsColor(String color) {
+    
+    public List<Category> getAllByUserId(String userId) {
+        List<Category> list = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.query(DatabaseHelper.TABLE_CATEGORIES,
-                new String[]{DatabaseHelper.COL_ID, DatabaseHelper.COL_COLOR}, // dodajemo i COLOR da možemo ispisati
-                DatabaseHelper.COL_COLOR + " = ?",
-                new String[]{color},
+                null, 
+                DatabaseHelper.COL_CATEGORY_USER_ID + " = ?",
+                new String[]{userId},
+                null, null, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                String id = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_ID));
+                String name = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_NAME));
+                String color = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_COLOR));
+                String userIdFromDb = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_CATEGORY_USER_ID));
+
+                list.add(new Category(id, color, name, userIdFromDb));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return  list;
+    }
+
+    public boolean existsColor(String color, String userId) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.query(DatabaseHelper.TABLE_CATEGORIES,
+                new String[]{DatabaseHelper.COL_ID, DatabaseHelper.COL_COLOR},
+                DatabaseHelper.COL_COLOR + " = ? AND " + DatabaseHelper.COL_CATEGORY_USER_ID + " = ?",
+                new String[]{color, userId},
                 null, null, null);
 
         boolean exists = cursor.moveToFirst();
@@ -66,12 +89,14 @@ public class CategoryDao {
         return exists;
     }
 
-    public List<String> getAllColors() {
+    public List<String> getAllColors(String userId) {
         List<String> colors = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.query(DatabaseHelper.TABLE_CATEGORIES,
                 new String[]{DatabaseHelper.COL_COLOR},
-                null, null, null, null, null);
+                DatabaseHelper.COL_CATEGORY_USER_ID + " = ?",
+                new String[]{userId},
+                null, null, null);
 
         while (cursor.moveToNext()) {
             colors.add(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_COLOR)));

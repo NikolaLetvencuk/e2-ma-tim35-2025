@@ -47,7 +47,7 @@ public class BadgeAdapter extends RecyclerView.Adapter<BadgeAdapter.BadgeViewHol
         if (resId != 0) {
             holder.imgBadgeIcon.setImageResource(resId);
         } else {
-            holder.imgBadgeIcon.setImageResource(R.drawable.ic_badge_default); // default ikona
+            holder.imgBadgeIcon.setImageResource(R.drawable.ic_badge_default);
         }
     }
 

@@ -59,6 +59,32 @@ public class TaskInstanceDao {
         db.close();
         return list;
     }
+    
+    // 🆕 Novi metod: Uzmi samo task instance za određenog korisnika
+    public List<TaskInstance> getAllByUserId(String userId) {
+        List<TaskInstance> list = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.query(DatabaseHelper.TABLE_TASK_INSTANCES,
+                null, 
+                DatabaseHelper.COL_INSTANCE_USER_ID + " = ?",
+                new String[]{userId},
+                null, null, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                String instanceId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_ID));
+                long instanceDate = cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_DATE));
+                TaskStatus status = TaskStatus.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_STATUS)));
+                String templateId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_TEMPLATE_ID));
+                String userIdFromDb = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_USER_ID));
+
+                list.add(new TaskInstance(instanceId, instanceDate, status, templateId, userIdFromDb));
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        db.close();
+        return list;
+    }
 
     public boolean update(TaskInstance taskInstance) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
@@ -128,6 +154,31 @@ public class TaskInstanceDao {
 
         String selection = DatabaseHelper.COL_INSTANCE_DATE + " BETWEEN ? AND ?";
         String[] selectionArgs = { String.valueOf(start), String.valueOf(end) };
+
+        Cursor cursor = db.query(DatabaseHelper.TABLE_TASK_INSTANCES, null, selection, selectionArgs, null, null, null);
+
+        while (cursor.moveToNext()) {
+            taskInstances.add(new TaskInstance(
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_ID)),
+                    cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_DATE)),
+                    TaskStatus.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_STATUS))),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_TEMPLATE_ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_USER_ID))
+            ));
+        }
+
+        cursor.close();
+        db.close();
+        return taskInstances;
+    }
+    
+    // 🆕 Novi metod: Uzmi task instance za određenog korisnika u datumu
+    public List<TaskInstance> getTasksByDateRangeAndUserId(long start, long end, String userId) {
+        List<TaskInstance> taskInstances = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        String selection = DatabaseHelper.COL_INSTANCE_DATE + " BETWEEN ? AND ? AND " + DatabaseHelper.COL_INSTANCE_USER_ID + " = ?";
+        String[] selectionArgs = { String.valueOf(start), String.valueOf(end), userId };
 
         Cursor cursor = db.query(DatabaseHelper.TABLE_TASK_INSTANCES, null, selection, selectionArgs, null, null, null);
 
@@ -276,5 +327,80 @@ public class TaskInstanceDao {
         cursor.close();
         db.close();
         return list;
+    }
+
+    public List<String> getUsersWithTasksForToday() {
+        List<String> userIds = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        long startOfDay, endOfDay;
+        {
+            java.util.Calendar calendar = java.util.Calendar.getInstance();
+            calendar.set(java.util.Calendar.HOUR_OF_DAY, 0);
+            calendar.set(java.util.Calendar.MINUTE, 0);
+            calendar.set(java.util.Calendar.SECOND, 0);
+            calendar.set(java.util.Calendar.MILLISECOND, 0);
+            startOfDay = calendar.getTimeInMillis();
+
+            calendar.set(java.util.Calendar.HOUR_OF_DAY, 23);
+            calendar.set(java.util.Calendar.MINUTE, 59);
+            calendar.set(java.util.Calendar.SECOND, 59);
+            calendar.set(java.util.Calendar.MILLISECOND, 999);
+            endOfDay = calendar.getTimeInMillis();
+        }
+
+        String query = "SELECT DISTINCT " + DatabaseHelper.COL_INSTANCE_USER_ID +
+                " FROM " + DatabaseHelper.TABLE_TASK_INSTANCES +
+                " WHERE " + DatabaseHelper.COL_INSTANCE_DATE + " BETWEEN ? AND ? " +
+                " AND " + DatabaseHelper.COL_INSTANCE_STATUS + " != ?";
+
+        String[] args = {
+                String.valueOf(startOfDay),
+                String.valueOf(endOfDay),
+                TaskStatus.CANCELLED.name()
+        };
+
+        Cursor cursor = db.rawQuery(query, args);
+        while (cursor.moveToNext()) {
+            String userId = cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_USER_ID));
+            userIds.add(userId);
+        }
+
+        cursor.close();
+        db.close();
+
+        return userIds;
+    }
+
+    public List<TaskInstance> getCompletedTasksForDay(String userId, long startOfDay, long endOfDay) {
+        List<TaskInstance> taskInstances = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        String selection = DatabaseHelper.COL_INSTANCE_USER_ID + " = ? AND " +
+                DatabaseHelper.COL_INSTANCE_DATE + " BETWEEN ? AND ? AND " +
+                DatabaseHelper.COL_INSTANCE_STATUS + " = ?";
+
+        String[] selectionArgs = {
+                userId,
+                String.valueOf(startOfDay),
+                String.valueOf(endOfDay),
+                TaskStatus.DONE.name()
+        };
+
+        Cursor cursor = db.query(DatabaseHelper.TABLE_TASK_INSTANCES, null, selection, selectionArgs, null, null, null);
+
+        while (cursor.moveToNext()) {
+            taskInstances.add(new TaskInstance(
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_ID)),
+                    cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_DATE)),
+                    TaskStatus.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_STATUS))),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_TEMPLATE_ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_INSTANCE_USER_ID))
+            ));
+        }
+
+        cursor.close();
+        db.close();
+        return taskInstances;
     }
 }

@@ -1,0 +1,20 @@
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Pritisnuto stanje -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#D08000" /> <!-- Tamnija narandžasta -->
+            <corners android:radius="10dp" />
+            <stroke android:width="2dp" android:color="#E0A000" />
+            <padding android:left="16dp" android:right="16dp" android:top="8dp" android:bottom="8dp"/>
+        </shape>
+    </item>
+    <!-- Normalno stanje -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FFC107" /> <!-- Narandžasta -->
+            <corners android:radius="10dp" />
+            <stroke android:width="2dp" android:color="#FFD700" />
+            <padding android:left="16dp" android:right="16dp" android:top="8dp" android:bottom="8dp"/>
+        </shape>
+    </item>
+</selector>

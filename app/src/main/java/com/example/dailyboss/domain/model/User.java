@@ -7,11 +7,12 @@ public class User {
     private String password;
     private String avatar;
     private boolean isActive;
-    private long registrationTimestamp; // za link aktivacije
+    private long registrationTimestamp;
+    private String allianceId;
 
     public User() {}
 
-    public User(String id, String username, String email, String password, String avatar, boolean isActive, long registrationTimestamp) {
+    public User(String id, String username, String email, String password, String avatar, boolean isActive, long registrationTimestamp, String allianceId) {
         this.id = id;
         this.username = username;
         this.email = email;
@@ -19,6 +20,7 @@ public class User {
         this.avatar = avatar;
         this.isActive = isActive;
         this.registrationTimestamp = registrationTimestamp;
+        this.allianceId = allianceId;
     }
 
     public String getId() {
@@ -27,6 +29,14 @@ public class User {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getAllianceId() {
+        return allianceId;
+    }
+
+    public void setAllianceId(String allianceId) {
+        this.allianceId = allianceId;
     }
 
     public long getRegistrationTimestamp() {

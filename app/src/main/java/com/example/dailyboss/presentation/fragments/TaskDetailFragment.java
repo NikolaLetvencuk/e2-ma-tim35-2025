@@ -14,17 +14,23 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.dailyboss.R;
+import com.example.dailyboss.data.SharedPreferencesHelper;
 import com.example.dailyboss.data.dao.TaskInstanceDao;
 import com.example.dailyboss.data.dto.TaskDetailDto;
+import com.example.dailyboss.data.repository.TaskInstanceRepositoryImpl;
 import com.example.dailyboss.domain.enums.TaskDifficulty;
 import com.example.dailyboss.domain.enums.TaskImportance;
 import com.example.dailyboss.domain.enums.TaskStatus;
+import com.example.dailyboss.service.TaskCompletionService;
+
+import android.widget.Toast;
 
 public class TaskDetailFragment extends Fragment {
 
     private TextView tvName, tvDescription, tvCategory, tvTime, tvXP, tvFrequency, tvDifficulty, tvImportance, tvStatus;
-    private TaskInstanceDao dao;
+    private TaskInstanceRepositoryImpl taskRepository;
     private Button btnDone, btnPaused, btnCancelled, btnEdit, btnDelete;
+    private TaskCompletionService taskCompletionService;
 
     public TaskDetailFragment() {
     }
@@ -50,11 +56,12 @@ public class TaskDetailFragment extends Fragment {
         btnEdit = view.findViewById(R.id.btnEditTask);
         btnDelete = view.findViewById(R.id.btnDeleteTask);
 
-        dao = new TaskInstanceDao(requireContext());
+        taskRepository = new TaskInstanceRepositoryImpl(requireContext());
+        taskCompletionService = new TaskCompletionService(requireContext());
 
         if (getArguments() != null) {
             String taskId = getArguments().getString("TASK_INSTANCE_ID");
-            TaskDetailDto taskDetail = dao.findTaskDetailById(taskId);
+            TaskDetailDto taskDetail = taskRepository.findTaskDetailById(taskId);
 
             if (taskDetail != null) {
                 tvName.setText(taskDetail.getName());
@@ -129,10 +136,33 @@ public class TaskDetailFragment extends Fragment {
     }
 
     private void updateTaskStatus(TaskDetailDto task, TaskStatus newStatus) {
+        TaskCompletionService.TaskCompletionResult result = taskCompletionService.completeTaskWithResult(task.getInstanceId(), newStatus);
         task.setStatus(newStatus);
-        dao.updateTaskStatus(task.getInstanceId(), newStatus);
+        taskRepository.updateTaskStatus(task.getInstanceId(), newStatus, task.getCategoryId());
         tvStatus.setText(formatEnum(newStatus.toString()));
         applyButtonStates(task);
+
+        if (result.success) {
+            task.setStatus(newStatus);
+            tvStatus.setText(formatEnum(newStatus.toString()));
+            applyButtonStates(task);
+
+            if (newStatus == TaskStatus.DONE) {
+                String message = String.format("Zadatak završen! (+%d XP)", result.xpGained);
+                if (result.leveledUp) {
+                    message += String.format("\n Nivo %d! Nova titula: %s", result.newLevel, result.newTitle);
+                }
+                Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
+                
+                if (result.leveledUp) {
+                    openEquipmentActivationFragment();
+                }
+            } else if (newStatus == TaskStatus.CANCELLED) {
+                Toast.makeText(requireContext(), " Zadatak otkazan", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(requireContext(), " Greška pri ažuriranju zadatka", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void togglePauseStatus(TaskDetailDto task) {
@@ -178,12 +208,35 @@ public class TaskDetailFragment extends Fragment {
         long instanceDate = task.getInstanceDate();
 
         if (isRecurring) {
-            dao.deleteFutureInstancesFromDate(templateId, instanceDate);
+            taskRepository.deleteFutureInstancesFromDate(templateId, instanceDate);
         } else {
-            dao.deleteById(instanceId);
+            taskRepository.deleteById(instanceId);
         }
 
         requireActivity().getSupportFragmentManager().popBackStack();
+    }
+
+    private void openEquipmentActivationFragment() {
+        EquipmentActivationFragment equipmentActivationFragment = new EquipmentActivationFragment();
+        
+        Bundle args = new Bundle();
+        args.putString("currentUserId", getCurrentUserId());
+        equipmentActivationFragment.setArguments(args);
+        
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, equipmentActivationFragment)
+                .addToBackStack(null)
+                .commit();
+    }
+
+    private String getCurrentUserId() {
+        if (getArguments() != null && getArguments().containsKey("currentUserId")) {
+            return getArguments().getString("currentUserId");
+        }
+        
+        SharedPreferencesHelper prefs = new SharedPreferencesHelper(requireContext());
+        return prefs.getLoggedInUserId();
     }
 
     private void applyButtonStates(TaskDetailDto taskDetail) {

@@ -25,7 +25,6 @@ public class SharedPreferencesHelper {
         return sharedPreferences.getString(KEY_LAST_SELECTED_COLOR, "#FFFFFF");
     }
 
-    // Sačuvaj ID i ime ulogovanog korisnika
     public void saveLoggedInUser(String userId, String userName) {
         sharedPreferences.edit()
                 .putString(KEY_USER_ID, userId)
@@ -34,27 +33,27 @@ public class SharedPreferencesHelper {
                 .apply();
     }
 
-    // Vrati ID ulogovanog korisnika
     public String getLoggedInUserId() {
         return sharedPreferences.getString(KEY_USER_ID, null);
     }
 
-    // Vrati ime ulogovanog korisnika (opciono)
     public String getLoggedInUserName() {
         return sharedPreferences.getString(KEY_USER_NAME, null);
     }
 
-    // Proveri da li je korisnik ulogovan
     public boolean isUserLoggedIn() {
         return sharedPreferences.getBoolean(KEY_IS_LOGGED_IN, false);
     }
 
-    // Odjavi korisnika (obriši podatke)
     public void logoutUser() {
         sharedPreferences.edit()
                 .remove(KEY_USER_ID)
                 .remove(KEY_USER_NAME)
                 .putBoolean(KEY_IS_LOGGED_IN, false)
                 .apply();
+    }
+
+    public void clearLoggedInUser() {
+        logoutUser();
     }
 }

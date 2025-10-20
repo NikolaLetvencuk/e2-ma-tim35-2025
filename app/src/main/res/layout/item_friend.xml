@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp"
+    android:background="?android:attr/selectableItemBackground"
+    android:gravity="center_vertical">
+
+    <!-- Avatar Prijatelja (koristim TextView za inicijal, ali može biti i ImageView) -->
+    <ImageView
+        android:id="@+id/friendImage"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:gravity="center"
+        android:text="A"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:layout_marginEnd="12dp"
+        android:background="@android:color/transparent" /> <!-- Primer drawable za krug -->
+
+    <!-- Korisničko Ime Prijatelja -->
+    <TextView
+        android:id="@+id/tvFriendUsername"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_light"
+        android:text="Ime Prijatelja" />
+
+    <!-- Kontejner za Nivo i Opcije Dugme -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <!-- Nivo Prijatelja -->
+        <TextView
+            android:id="@+id/tvFriendLevel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textColor="#4CAF50"
+            android:text="Lv. 42"
+            android:layout_marginEnd="8dp"/> <!-- Mali razmak pre dugmeta -->
+
+        <!-- Dugme za Opcije (tri tačke) -->
+        <ImageView
+            android:id="@+id/btnFriendOptions"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/ic_more"
+            android:contentDescription="Opcije"
+            android:padding="4dp"
+            android:backgroundTint="@color/white"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+    </LinearLayout>
+
+</LinearLayout>

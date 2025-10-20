@@ -5,7 +5,9 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import com.example.dailyboss.data.dao.UserDao;
+import com.example.dailyboss.data.dao.UserStatisticDao;
 import com.example.dailyboss.domain.model.User;
+import com.example.dailyboss.domain.model.UserStatistic;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -14,23 +16,36 @@ import com.google.firebase.firestore.DocumentSnapshot; // Dodaj import
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import java.util.List;
+import java.util.UUID;
+
 public class UserRepository {
 
     private final FirebaseAuth firebaseAuth;
     private final FirebaseFirestore db;
-    private final UserDao userDao;
+    private final UserDao userDao; // Ostavljamo private
+    private final UserStatisticDao userStatisticDao;
     private static final String USERS_COLLECTION = "users";
 
-    public UserRepository(Context context) { // Konstruktor mora da prima Context
+    public UserRepository(Context context) {
         this.firebaseAuth = FirebaseAuth.getInstance();
         this.db = FirebaseFirestore.getInstance();
         this.userDao = new UserDao(context);
+        this.userStatisticDao = new UserStatisticDao(context);
     }
 
-    // MODIFIKOVANO: onSuccess sada prima User objekat
     public interface UserDataListener {
-        void onSuccess(User user); // ✨ Izmenjeno: Sada vraća User objekat
+        void onSuccess(User user);
         void onFailure(Exception e);
+    }
+
+    public User getLocalUser(String userId) {
+        Log.d("TAG", "getLocalUser: " + userId);
+        return userDao.getUser(userId);
+    }
+
+    public List<User> getLocalUsersByAllianceId(String allianceId) {
+        return userDao.getUsersByAllianceId(allianceId);
     }
 
     public void checkUsernameExists(String username, OnCompleteListener<QuerySnapshot> listener) {
@@ -46,22 +61,22 @@ public class UserRepository {
                     if (authTask.isSuccessful()) {
                         FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
                         if (firebaseUser != null) {
-                            // 1. AŽURIRAJ MODEL SA UID-om PRE UPISA
                             userModel.setId(firebaseUser.getUid());
 
+                            // TODO: Uključi ovo ponovo u production-u!
                             firebaseUser.sendEmailVerification()
                                     .addOnCompleteListener(emailTask -> {
                                         if (emailTask.isSuccessful()) {
                                             Log.d("UserRepository", "Verifikacioni email uspešno poslat.");
 
-                                            // 2. Čuvanje u Firestore
                                             db.collection(USERS_COLLECTION)
                                                     .document(firebaseUser.getUid())
                                                     .set(userModel)
                                                     .addOnSuccessListener(aVoid -> {
-                                                        // 3. SINHRONIZACIJA SA LOKALNIM SQLite-om
-                                                        if (userDao.upsert(userModel)) { // Koristi upsert
-                                                            listener.onSuccess(userModel); // ✨ Izmenjeno: Vrati userModel
+                                                        if (userDao.upsert(userModel)) {
+                                                            listener.onSuccess(userModel);
+                                                            UserStatistic userStatistic = new UserStatistic(UUID.randomUUID().toString(), userModel.getId(), 0, 0, 0, 0, 0, 0, 0, 0, 0, System.currentTimeMillis(), 0, 0, 0, 0, "Novajlija");
+                                                            userStatisticDao.upsert(userStatistic);
                                                         } else {
                                                             Log.e("UserRepository", "Lokalni upis profila nije uspeo nakon Firestore uspeha.");
                                                             listener.onFailure(new Exception("Lokalni upis profila nije uspeo."));
@@ -69,7 +84,7 @@ public class UserRepository {
                                                     })
                                                     .addOnFailureListener(e -> {
                                                         Log.e("UserRepository", "Firestore upis profila nije uspeo: " + e.getMessage());
-                                                        firebaseUser.delete(); // Obrisi Auth nalog ako Firestore ne uspe
+                                                        firebaseUser.delete();
                                                         listener.onFailure(e);
                                                     });
                                         } else {
@@ -79,6 +94,27 @@ public class UserRepository {
                                             listener.onFailure(emailTask.getException());
                                         }
                                     });
+                            
+                            Log.d("UserRepository", "Preskačem email verifikaciju za testiranje.");
+
+                            db.collection(USERS_COLLECTION)
+                                    .document(firebaseUser.getUid())
+                                    .set(userModel)
+                                    .addOnSuccessListener(aVoid -> {
+                                        if (userDao.upsert(userModel)) { // Koristi upsert
+                                            listener.onSuccess(userModel); // ✨ Izmenjeno: Vrati userModel
+                                            UserStatistic userStatistic = new UserStatistic(UUID.randomUUID().toString(), userModel.getId(), 0, 0, 0, 0, 0, 0, 0, 0, 0, System.currentTimeMillis(), 0, 0, 0, 0, "Novajlija");
+                                            userStatisticDao.upsert(userStatistic);
+                                        } else {
+                                            Log.e("UserRepository", "Lokalni upis profila nije uspeo nakon Firestore uspeha.");
+                                            listener.onFailure(new Exception("Lokalni upis profila nije uspeo."));
+                                        }
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Log.e("UserRepository", "Firestore upis profila nije uspeo: " + e.getMessage());
+                                        firebaseUser.delete(); // Obrisi Auth nalog ako Firestore ne uspe
+                                        listener.onFailure(e);
+                                    });
                         }
                     } else {
                         Log.e("UserRepository", "Auth registracija nije uspela: " + authTask.getException().getMessage());
@@ -87,10 +123,7 @@ public class UserRepository {
                 });
     }
 
-    /**
-     * Dohvata korisničke podatke iz Firestore-a na osnovu UID-a.
-     */
-    public void getUserData(String userId, UserDataListener listener) { // ✨ Nova metoda
+    public void getUserData(String userId, UserDataListener listener) {
         db.collection(USERS_COLLECTION)
                 .document(userId)
                 .get()
@@ -100,7 +133,7 @@ public class UserRepository {
                         if (document.exists()) {
                             User user = document.toObject(User.class);
                             if (user != null) {
-                                user.setId(document.getId()); // Postavi UID iz dokumenta
+                                user.setId(document.getId());
                                 listener.onSuccess(user);
                             } else {
                                 listener.onFailure(new Exception("Korisnik pronađen, ali nije moguće parsirati podatke."));
@@ -114,11 +147,30 @@ public class UserRepository {
                 });
     }
 
+    public Task<User> updateAllianceIdInFirestore(String userId, String newAllianceId) {
+        return db.collection(USERS_COLLECTION)
+                .document(userId)
+                .update("allianceId", newAllianceId)
 
-    /**
-     * Proverava da li je korisnik verifikovao email i ažurira 'isActive' u Firestore-u (i SQLite-u).
-     */
-    public void checkAndActivateUser(UserDataListener listener) { // ✨ Izmenjeno: onSuccess prima User
+                .continueWith(task -> {
+                    if (task.isSuccessful()) {
+                        userDao.updateAllianceId(userId, newAllianceId);
+
+                        User updatedUser = userDao.getUser(userId);
+
+                        if (updatedUser != null) {
+                            return updatedUser; // Vrati User objekat kao rezultat Task-a
+                        } else {
+                            throw new Exception("Greška: Nije moguće dohvatiti ažuriranog korisnika iz lokalne baze.");
+                        }
+                    } else {
+                        throw task.getException() != null ? task.getException() : new Exception("Ažuriranje Firestore-a neuspešno.");
+                    }
+                });
+    }
+
+
+    public void checkAndActivateUser(UserDataListener listener) {
         FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
 
         if (firebaseUser == null) {
@@ -131,14 +183,13 @@ public class UserRepository {
                     if (reloadTask.isSuccessful()) {
                         FirebaseUser reloadedUser = firebaseAuth.getCurrentUser();
 
-                        if (reloadedUser != null && reloadedUser.isEmailVerified()) {
+                        if (reloadedUser != null && reloadedUser.isEmailVerified()) { // Uklonjena email verifikacija za testiranje
                             Log.d("UserRepository", "Email je verifikovan. Ažuriram Firestore.");
 
-                            // Dohvati trenutne podatke korisnika da ih ne prepišemo
                             getUserData(reloadedUser.getUid(), new UserDataListener() {
                                 @Override
                                 public void onSuccess(User userFromFirestore) {
-                                    userFromFirestore.setActive(true); // Ažuriraj active status
+                                    userFromFirestore.setActive(true);
 
                                     db.collection(USERS_COLLECTION)
                                             .document(reloadedUser.getUid())
@@ -146,12 +197,11 @@ public class UserRepository {
                                             .addOnSuccessListener(aVoid -> {
                                                 Log.d("UserRepository", "Firestore 'active' postavljen na true.");
 
-                                                // Sinhronizuj i lokalnu bazu
-                                                if (userDao.upsert(userFromFirestore)) { // Koristi upsert
-                                                    listener.onSuccess(userFromFirestore); // ✨ Vrati ažuriranog korisnika
+                                                if (userDao.upsert(userFromFirestore)) {
+                                                    listener.onSuccess(userFromFirestore);
                                                 } else {
                                                     Log.e("UserRepository", "Lokalni upis/ažuriranje profila nije uspeo nakon Firestore uspeha.");
-                                                    listener.onSuccess(userFromFirestore); // Ipak javi uspeh, ali sa upozorenjem
+                                                    listener.onSuccess(userFromFirestore);
                                                 }
                                             })
                                             .addOnFailureListener(e -> {
@@ -188,17 +238,14 @@ public class UserRepository {
             return;
         }
 
-        // Dohvati korisnika iz lokalne baze
         User user = userDao.getUser(userId);
         if (user == null) {
             listener.onFailure("Korisnik nije pronađen u lokalnoj bazi.");
             return;
         }
 
-        // Postavi novu lozinku
         user.setPassword(newPassword);
 
-        // Ažuriraj korisnika u bazi
         boolean success = userDao.upsert(user);
         if (success) {
             listener.onSuccess("Lozinka je uspešno promenjena.");

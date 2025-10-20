@@ -17,7 +17,6 @@ import androidx.fragment.app.Fragment;
 import com.example.dailyboss.R;
 import com.example.dailyboss.presentation.activities.AuthenticationActivity;
 import com.example.dailyboss.service.AuthService;
-// Zavisnost od AuthenticationActivity biće potrebna za navigaciju
 
 public class RegistrationFragment extends Fragment {
 
@@ -29,17 +28,12 @@ public class RegistrationFragment extends Fragment {
     private String selectedAvatarName = "avatar_1";
     private ImageView selectedAvatarView = null;
 
-    // Najbolje mesto za inicijalizaciju AuthService koja treba Context
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
         authService = new AuthService(context);
     }
 
-    /**
-     * ZAMENJUJE setContentView() iz Activity-ja
-     * Kreira View za Fragment iz XML-a.
-     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -47,25 +41,19 @@ public class RegistrationFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_registration, container, false);
     }
 
-    /**
-     * ZAMENJUJE veći deo onCreate() logike iz Activity-ja
-     * Postavljanje View komponenti i Listener-a.
-     */
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Inicijalizacija View-ova
         initViews(view);
         setupAvatarSelection();
 
         registerButton.setOnClickListener(v -> registerUser());
     }
 
-    // --- Metode premeštene iz Activity-ja ---
 
     private void initViews(View view) {
-        // Ključno: koristite 'view.findViewById'
         emailInput = view.findViewById(R.id.emailInput);
         usernameInput = view.findViewById(R.id.usernameInput);
         passwordInput = view.findViewById(R.id.passwordInput);
@@ -80,7 +68,6 @@ public class RegistrationFragment extends Fragment {
     }
 
     private void setupAvatarSelection() {
-        // Logika ostaje ista
         selectedAvatarView = avatarViews[0];
         selectedAvatarView.setBackgroundResource(R.drawable.avatar_border_selected);
 
@@ -92,7 +79,6 @@ public class RegistrationFragment extends Fragment {
     }
 
     private void selectAvatar(View v, String avatarName) {
-        // Logika ostaje ista
         if (selectedAvatarView != null) {
             selectedAvatarView.setBackgroundResource(R.drawable.avatar_border);
         }
@@ -117,7 +103,6 @@ public class RegistrationFragment extends Fragment {
             @Override
             public void onSuccess(String message) {
                 registerButton.setEnabled(true);
-                // Koristite requireContext() ili getActivity() umesto RegisterActivity.this
                 Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show();
 
                 if (requireActivity() instanceof AuthenticationActivity) {
@@ -133,9 +118,7 @@ public class RegistrationFragment extends Fragment {
         });
     }
 
-    // Proširena Validacija polja
     private boolean validateFields(String email, String username, String password, String confirmPassword) {
-        // Logika ostaje ista
         boolean valid = true;
 
         if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {

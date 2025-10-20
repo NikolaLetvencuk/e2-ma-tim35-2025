@@ -7,8 +7,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "dailyboss.db";
-    // 💥 AŽURIRANO: Povećajte verziju da bi se pozvao onUpgrade i kreirala tabela USERS
-    private static final int DATABASE_VERSION = 7;
+    private static final int DATABASE_VERSION = 23;
 
     public static final String TABLE_CATEGORIES = "categories";
     public static final String COL_ID = "id";
@@ -79,6 +78,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String COL_USER_AVATAR = "avatar";
     public static final String COL_USER_IS_ACTIVE = "isActive";
     public static final String COL_USER_REG_TIMESTAMP = "registrationTimestamp";
+    public static final String COL_USER_ALLIANCE_ID = "allianceId";
 
     private static final String CREATE_TABLE_USERS =
             "CREATE TABLE " + TABLE_USERS + " (" +
@@ -88,31 +88,32 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     COL_USER_PASSWORD + " TEXT NOT NULL," +
                     COL_USER_AVATAR + " TEXT," +
                     COL_USER_IS_ACTIVE + " INTEGER NOT NULL," +
-                    COL_USER_REG_TIMESTAMP + " INTEGER NOT NULL" +
+                    COL_USER_REG_TIMESTAMP + " INTEGER NOT NULL," +
+                    COL_USER_ALLIANCE_ID + " TEXT" +
                     ");";
 
-    public static final String TABLE_USER_STATISTICS = "user_statistics";
+    public static final String TABLE_USER_PROFILE = "user_profile";
 
-    public static final String COL_STAT_ID = "id";
-    public static final String COL_STAT_USER_ID = "userId";
-    public static final String COL_STAT_COMPLETED_TASKS = "completedTasks";
-    public static final String COL_STAT_FAILED_TASKS = "failedTasks";
-    public static final String COL_STAT_LEVEL = "level";
-    public static final String COL_STAT_EXP_POINTS = "experiencePoints";
-    public static final String COL_STAT_WIN_STREAK = "winStreak";
-    public static final String COL_STAT_LAST_ACTIVE = "lastActiveTimestamp";
+    public static final String COL_PROFILE_ID = "id";
+    public static final String COL_PROFILE_USER_ID = "userId";
+    public static final String COL_PROFILE_COMPLETED_TASKS = "completedTasks";
+    public static final String COL_PROFILE_FAILED_TASKS = "failedTasks";
+    public static final String COL_PROFILE_LEVEL = "level";
+    public static final String COL_PROFILE_EXP_POINTS = "experiencePoints";
+    public static final String COL_PROFILE_WIN_STREAK = "winStreak";
+    public static final String COL_PROFILE_LAST_ACTIVE = "lastActiveTimestamp";
 
-    private static final String CREATE_TABLE_USER_STATISTICS =
-            "CREATE TABLE " + TABLE_USER_STATISTICS + " (" +
-                    COL_STAT_ID + " TEXT PRIMARY KEY," +
-                    COL_STAT_USER_ID + " TEXT NOT NULL," +
-                    COL_STAT_COMPLETED_TASKS + " INTEGER DEFAULT 0," +
-                    COL_STAT_FAILED_TASKS + " INTEGER DEFAULT 0," +
-                    COL_STAT_LEVEL + " INTEGER DEFAULT 1," +
-                    COL_STAT_EXP_POINTS + " INTEGER DEFAULT 0," +
-                    COL_STAT_WIN_STREAK + " INTEGER DEFAULT 0," +
-                    COL_STAT_LAST_ACTIVE + " INTEGER," +
-                    "FOREIGN KEY(" + COL_STAT_USER_ID + ") REFERENCES " + TABLE_USERS + "(" + COL_USER_ID + ")" +
+    private static final String CREATE_TABLE_USER_PROFILE =
+            "CREATE TABLE " + TABLE_USER_PROFILE + " (" +
+                    COL_PROFILE_ID + " TEXT PRIMARY KEY," +
+                    COL_PROFILE_USER_ID + " TEXT NOT NULL," +
+                    COL_PROFILE_COMPLETED_TASKS + " INTEGER DEFAULT 0," +
+                    COL_PROFILE_FAILED_TASKS + " INTEGER DEFAULT 0," +
+                    COL_PROFILE_LEVEL + " INTEGER DEFAULT 1," +
+                    COL_PROFILE_EXP_POINTS + " INTEGER DEFAULT 0," +
+                    COL_PROFILE_WIN_STREAK + " INTEGER DEFAULT 0," +
+                    COL_PROFILE_LAST_ACTIVE + " INTEGER," +
+                    "FOREIGN KEY(" + COL_PROFILE_USER_ID + ") REFERENCES " + TABLE_USERS + "(" + COL_USER_ID + ")" +
                     ");";
 
 
@@ -205,6 +206,289 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     "FOREIGN KEY(" + COL_USER_EQUIPMENT_EQUIPMENT_ID + ") REFERENCES " + TABLE_EQUIPMENT + "(" + COL_EQUIPMENT_ID + ")" +
                     ");";
 
+
+    public static final String TABLE_USER_STATISTICS = "user_statistics";
+    public static final String COL_STAT_ID = "id";
+    public static final String COL_STAT_USER_ID = "user_id";
+    public static final String COL_STAT_ACTIVE_DAYS_COUNT = "active_days_count";
+    public static final String COL_STAT_TOTAL_CREATED_TASKS = "total_created_tasks";
+    public static final String COL_STAT_TOTAL_COMPLETED_TASKS = "total_completed_tasks";
+    public static final String COL_STAT_TOTAL_FAILED_TASKS = "total_failed_tasks";
+    public static final String COL_STAT_TOTAL_CANCELLED_TASKS = "total_cancelled_tasks";
+    public static final String COL_STAT_LONGEST_TASK_STREAK = "longest_task_streak";
+    public static final String COL_STAT_CURRENT_TASK_STREAK = "current_task_streak";
+    // public static final String COL_STAT_COMPLETED_TASKS_BY_CATEGORY = "completed_tasks_by_category"; // UKLONI OVO
+    public static final String COL_STAT_TOTAL_SPECIAL_MISSIONS_STARTED = "total_special_missions_started";
+    public static final String COL_STAT_TOTAL_SPECIAL_MISSIONS_COMPLETED = "total_special_missions_completed";
+    public static final String COL_STAT_LAST_STREAK_UPDATE_TIMESTAMP = "last_streak_update_timestamp";
+    public static final String COL_STAT_TOTAL_EXP_POINTS = "total_exp_points";
+    public static final String COL_STAT_AVERAGE_EXP_EARNED = "average_exp_earned";
+
+    public static final String COL_STAT_POWER_POINTS = "powerPoints";
+    public static final String COL_STAT_COINS = "coins";
+    public static final String COL_STAT_TITLE = "title";
+    // SQL za kreiranje tabele user_statistics
+    private static final String CREATE_TABLE_USER_STATISTICS =
+            "CREATE TABLE " + TABLE_USER_STATISTICS + " (" +
+                    COL_STAT_ID + " TEXT PRIMARY KEY," +
+                    COL_STAT_USER_ID + " TEXT NOT NULL UNIQUE," +
+                    COL_STAT_ACTIVE_DAYS_COUNT + " INTEGER DEFAULT 0," +
+                    COL_STAT_TOTAL_CREATED_TASKS + " INTEGER DEFAULT 0," +
+                    COL_STAT_TOTAL_COMPLETED_TASKS + " INTEGER DEFAULT 0," +
+                    COL_STAT_TOTAL_FAILED_TASKS + " INTEGER DEFAULT 0," +
+                    COL_STAT_TOTAL_CANCELLED_TASKS + " INTEGER DEFAULT 0," +
+                    COL_STAT_LONGEST_TASK_STREAK + " INTEGER DEFAULT 0," +
+                    COL_STAT_CURRENT_TASK_STREAK + " INTEGER DEFAULT 0," +
+                    COL_STAT_TOTAL_SPECIAL_MISSIONS_STARTED + " INTEGER DEFAULT 0," +
+                    COL_STAT_TOTAL_SPECIAL_MISSIONS_COMPLETED + " INTEGER DEFAULT 0," +
+                    COL_STAT_LAST_STREAK_UPDATE_TIMESTAMP + " INTEGER DEFAULT 0," +
+                    COL_STAT_TOTAL_EXP_POINTS + " INTEGER DEFAULT 0," +
+                    COL_STAT_AVERAGE_EXP_EARNED + " INTEGER DEFAULT 0," +
+                    COL_STAT_POWER_POINTS + " INTEGER DEFAULT 0," +
+                    COL_STAT_COINS + " INTEGER DEFAULT 0," +
+                    COL_STAT_TITLE + " TEXT," +
+
+                    "FOREIGN KEY(" + COL_STAT_USER_ID + ") REFERENCES " + TABLE_USERS + "(" + COL_USER_ID + ") ON DELETE CASCADE" +
+                    ");";
+
+    // --- Nova tabela za UserCategoryStatistics ---
+    public static final String TABLE_USER_CATEGORY_STATISTICS = "user_category_statistics";
+    public static final String COL_U_CAT_STAT_ID = "id"; // Može biti auto-generated
+    public static final String COL_U_CAT_STAT_USER_STAT_ID = "user_statistic_id";
+    public static final String COL_U_CAT_STAT_CATEGORY_ID = "category_id";
+    public static final String COL_U_CAT_STAT_COMPLETED_COUNT = "completed_count";
+    public static final String COL_U_CAT_STAT_CATEGORY_NAME = "category_name";
+
+    private static final String CREATE_TABLE_USER_CATEGORY_STATISTICS =
+            "CREATE TABLE " + TABLE_USER_CATEGORY_STATISTICS + " (" +
+                    COL_U_CAT_STAT_ID + " TEXT PRIMARY KEY," + // UUID ili slično
+                    COL_U_CAT_STAT_USER_STAT_ID + " TEXT NOT NULL," +
+                    COL_U_CAT_STAT_CATEGORY_ID + " TEXT NOT NULL," +
+                    COL_U_CAT_STAT_CATEGORY_NAME + " TEXT NOT NULL, " +
+                    COL_U_CAT_STAT_COMPLETED_COUNT + " INTEGER DEFAULT 0," +
+                    "FOREIGN KEY(" + COL_U_CAT_STAT_USER_STAT_ID + ") REFERENCES " + TABLE_USER_STATISTICS + "(" + COL_STAT_ID + ") ON DELETE CASCADE," +
+                    "FOREIGN KEY(" + COL_U_CAT_STAT_CATEGORY_ID + ") REFERENCES " + TABLE_CATEGORIES + "(" + COL_ID + ") ON DELETE CASCADE," +
+                    "UNIQUE(" + COL_U_CAT_STAT_USER_STAT_ID + ", " + COL_U_CAT_STAT_CATEGORY_ID + ")" + // Jedinstven par
+                    ");";
+
+    public static final String TABLE_FRIENDSHIPS = "friendships";
+    public static final String COL_FRIENDSHIP_ID = "id";
+    public static final String COL_FRIENDSHIP_SENDER_ID = "senderId";
+    public static final String COL_FRIENDSHIP_RECEIVER_ID = "receiverId";
+    public static final String COL_FRIENDSHIP_TIMESTAMP = "timestamp";
+    public static final String COL_FRIENDSHIP_STATUS = "status";
+
+    private static final String CREATE_TABLE_FRIENDSHIPS =
+            "CREATE TABLE " + TABLE_FRIENDSHIPS + " (" +
+                    COL_FRIENDSHIP_ID + " TEXT PRIMARY KEY," +
+                    COL_FRIENDSHIP_SENDER_ID + " TEXT NOT NULL," +
+                    COL_FRIENDSHIP_RECEIVER_ID + " TEXT NOT NULL," +
+                    COL_FRIENDSHIP_TIMESTAMP + " INTEGER NOT NULL," +
+                    COL_FRIENDSHIP_STATUS + " TEXT NOT NULL," +
+                    "FOREIGN KEY(" + COL_FRIENDSHIP_SENDER_ID + ") REFERENCES " + TABLE_USERS + "(" + COL_USER_ID + ")," +
+                    "FOREIGN KEY(" + COL_FRIENDSHIP_RECEIVER_ID + ") REFERENCES " + TABLE_USERS + "(" + COL_USER_ID + ")" +
+                    ");";
+
+    // --- NOVE TABELE ZA SAVEZ (Alliance) ---
+
+    // Tabela za Savez (Alliance)
+    public static final String TABLE_ALLIANCES = "alliances";
+    public static final String COL_ALLIANCE_ID = "id";
+    public static final String COL_ALLIANCE_NAME = "name";
+    public static final String COL_ALLIANCE_LEADER_ID = "leaderId";
+    public static final String COL_ALLIANCE_CREATED_AT = "createdAt";
+    public static final String COL_ALLIANCE_MISSION_ACTIVE = "isMissionActive";
+    public static final String COL_ALLIANCE_STATUS = "status";
+    public static final String COL_ALLIANCE_SPECIAL_MISSION_ID = "specialMissionId";
+
+
+    // Tabela za Pozive u Savez (AllianceInvitation)
+    public static final String TABLE_ALLIANCE_INVITATIONS = "alliance_invitations";
+    public static final String COL_INVITATION_ID = "id";
+    public static final String COL_INVITATION_ALLIANCE_ID = "allianceId";
+    public static final String COL_INVITATION_ALLIANCE_NAME = "allianceName";
+    public static final String COL_INVITATION_SENDER_ID = "senderId";
+    public static final String COL_INVITATION_RECEIVER_ID = "receiverId";
+    public static final String COL_INVITATION_SENT_AT = "sentAt";
+    public static final String COL_INVITATION_STATUS = "status";
+
+    // Tabela za Poruke Saveza (AllianceMessage)
+    public static final String TABLE_ALLIANCE_MESSAGES = "alliance_messages";
+    public static final String COL_MESSAGE_ID = "id";
+    public static final String COL_MESSAGE_ALLIANCE_ID = "allianceId";
+    public static final String COL_MESSAGE_SENDER_ID = "senderId";
+    public static final String COL_MESSAGE_SENDER_USERNAME = "sender_username";
+    public static final String COL_MESSAGE_CONTENT = "content";
+    public static final String COL_MESSAGE_TIMESTAMP = "timestamp";
+
+    // SQL za kreiranje tabele ALLIANCES
+    private static final String CREATE_TABLE_ALLIANCES =
+            "CREATE TABLE " + TABLE_ALLIANCES + " (" +
+                    COL_ALLIANCE_ID + " TEXT PRIMARY KEY," +
+                    COL_ALLIANCE_NAME + " TEXT NOT NULL," +
+                    COL_ALLIANCE_LEADER_ID + " TEXT NOT NULL," +
+                    COL_ALLIANCE_CREATED_AT + " INTEGER NOT NULL," +
+                    COL_ALLIANCE_MISSION_ACTIVE + " INTEGER NOT NULL," + // 0=false, 1=true
+                    COL_ALLIANCE_STATUS + " TEXT NOT NULL," +
+                    COL_ALLIANCE_SPECIAL_MISSION_ID + " TEXT," +
+                    "FOREIGN KEY(" + COL_ALLIANCE_LEADER_ID + ") REFERENCES " + TABLE_USERS + "(" + COL_USER_ID + ") ON DELETE CASCADE" +
+                    ");";
+
+    // SQL za kreiranje tabele ALLIANCE_INVITATIONS
+    private static final String CREATE_TABLE_ALLIANCE_INVITATIONS =
+            "CREATE TABLE " + TABLE_ALLIANCE_INVITATIONS + " (" +
+                    COL_INVITATION_ID + " TEXT PRIMARY KEY," +
+                    COL_INVITATION_ALLIANCE_ID + " TEXT NOT NULL," +
+                    COL_INVITATION_ALLIANCE_NAME + " TEXT NOT NULL," +
+                    COL_INVITATION_SENDER_ID + " TEXT NOT NULL," +
+                    COL_INVITATION_RECEIVER_ID + " TEXT NOT NULL," +
+                    COL_INVITATION_SENT_AT + " INTEGER NOT NULL," +
+                    COL_INVITATION_STATUS + " TEXT NOT NULL," + // "Pending", "Accepted", "Rejected"
+                    "FOREIGN KEY(" + COL_INVITATION_ALLIANCE_ID + ") REFERENCES " + TABLE_ALLIANCES + "(" + COL_ALLIANCE_ID + ") ON DELETE CASCADE," +
+                    "FOREIGN KEY(" + COL_INVITATION_RECEIVER_ID + ") REFERENCES " + TABLE_USERS + "(" + COL_USER_ID + ") ON DELETE CASCADE" +
+                    ");";
+
+    // SQL za kreiranje tabele ALLIANCE_MESSAGES
+    private static final String CREATE_TABLE_ALLIANCE_MESSAGES =
+            "CREATE TABLE " + TABLE_ALLIANCE_MESSAGES + " (" +
+                    COL_MESSAGE_ID + " TEXT PRIMARY KEY," +
+                    COL_MESSAGE_ALLIANCE_ID + " TEXT NOT NULL," +
+                    COL_MESSAGE_SENDER_ID + " TEXT NOT NULL," +
+                    COL_MESSAGE_SENDER_USERNAME + " TEXT NOT NULL," +
+                    COL_MESSAGE_CONTENT + " TEXT NOT NULL," +
+                    COL_MESSAGE_TIMESTAMP + " INTEGER NOT NULL," +
+                    "FOREIGN KEY(" + COL_MESSAGE_ALLIANCE_ID + ") REFERENCES " + TABLE_ALLIANCES + "(" + COL_ALLIANCE_ID + ") ON DELETE CASCADE," +
+                    "FOREIGN KEY(" + COL_MESSAGE_SENDER_ID + ") REFERENCES " + TABLE_USERS + "(" + COL_USER_ID + ") ON DELETE CASCADE" +
+                    ");";
+
+    // --- NOVE TABELE ZA BATTLE SISTEM ---
+
+    // Tabela za Boss Data
+    public static final String TABLE_BOSS_DATA = "boss_data";
+    public static final String COL_BOSS_LEVEL = "level";
+    public static final String COL_BOSS_NAME = "name";
+    public static final String COL_BOSS_MAX_HP = "max_hp";
+    public static final String COL_BOSS_IMAGE_PATH = "image_path";
+    public static final String COL_BOSS_CREATED_AT = "created_at";
+
+    // Tabela za Battle History
+    public static final String TABLE_BATTLE_HISTORY = "battle_history";
+    public static final String COL_BATTLE_ID = "id";
+    public static final String COL_BATTLE_USER_ID = "user_id";
+    public static final String COL_BATTLE_BOSS_LEVEL = "boss_level";
+    public static final String COL_BATTLE_BOSS_DEFEATED = "boss_defeated";
+    public static final String COL_BATTLE_COINS_WON = "coins_won";
+    public static final String COL_BATTLE_EQUIPMENT_WON = "equipment_won";
+    public static final String COL_BATTLE_ATTACKS_USED = "attacks_used";
+    public static final String COL_BATTLE_DATE = "battle_date";
+
+    // SQL za kreiranje tabele BOSS_DATA
+    private static final String CREATE_TABLE_BOSS_DATA =
+            "CREATE TABLE " + TABLE_BOSS_DATA + " (" +
+                    COL_BOSS_LEVEL + " INTEGER PRIMARY KEY," +
+                    COL_BOSS_NAME + " TEXT NOT NULL," +
+                    COL_BOSS_MAX_HP + " INTEGER NOT NULL," +
+                    COL_BOSS_IMAGE_PATH + " TEXT," +
+                    COL_BOSS_CREATED_AT + " INTEGER DEFAULT (strftime('%s', 'now'))" +
+                    ");";
+
+    // SQL za kreiranje tabele BATTLE_HISTORY
+    private static final String CREATE_TABLE_BATTLE_HISTORY =
+            "CREATE TABLE " + TABLE_BATTLE_HISTORY + " (" +
+                    COL_BATTLE_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    COL_BATTLE_USER_ID + " TEXT NOT NULL," +
+                    COL_BATTLE_BOSS_LEVEL + " INTEGER NOT NULL," +
+                    COL_BATTLE_BOSS_DEFEATED + " BOOLEAN NOT NULL," +
+                    COL_BATTLE_COINS_WON + " INTEGER DEFAULT 0," +
+                    COL_BATTLE_EQUIPMENT_WON + " TEXT," +
+                    COL_BATTLE_ATTACKS_USED + " INTEGER NOT NULL," +
+                    COL_BATTLE_DATE + " INTEGER NOT NULL," +
+                    "FOREIGN KEY(" + COL_BATTLE_USER_ID + ") REFERENCES " + TABLE_USER_STATISTICS + "(" + COL_STAT_USER_ID + ")" +
+                    ");";
+
+    // Tabela za MissionActivityLog
+    public static final String TABLE_MISSION_ACTIVITY_LOG = "mission_activity_log";
+    public static final String COL_MISSION_LOG_ID = "id";
+    public static final String COL_MISSION_LOG_SPECIAL_MISSION_ID = "specialMissionId";
+    public static final String COL_MISSION_LOG_USER_ID = "userId";
+    public static final String COL_MISSION_LOG_USERNAME = "username";
+    public static final String COL_MISSION_LOG_ACTIVITY_DESCRIPTION = "activityDescription";
+    public static final String COL_MISSION_LOG_DAMAGE_DEALT = "damageDealt";
+    public static final String COL_MISSION_LOG_TIMESTAMP = "timestamp";
+
+    // Tabela za SpecialMission
+    public static final String TABLE_SPECIAL_MISSIONS = "special_missions";
+    public static final String COL_SM_ID = "id";
+    public static final String COL_SM_ALLIANCE_ID = "allianceId";
+    public static final String COL_SM_START_TIME = "startTime";
+    public static final String COL_SM_END_TIME = "endTime";
+    public static final String COL_SM_TOTAL_BOSS_HP = "totalBossHp";
+    public static final String COL_SM_CURRENT_BOSS_HP = "currentBossHp";
+    public static final String COL_SM_COMPLETED_SUCCESSFULLY = "completedSuccessfully";
+    public static final String COL_SM_IS_ACTIVE = "isActive";
+    public static final String COL_SM_NUM_PARTICIPATING_MEMBERS = "numParticipatingMembers";
+    public static final String COL_SM_REWARD_AWARDED = "rewardAwarded";
+
+
+    // Tabela za UserMissionProgress
+    public static final String TABLE_USER_MISSION_PROGRESS = "user_mission_progress";
+    public static final String COL_UMP_ID = "id";
+    public static final String COL_UMP_SPECIAL_MISSION_ID = "specialMissionId";
+    public static final String COL_UMP_USER_ID = "userId";
+    public static final String COL_UMP_USERNAME = "username";
+    public static final String COL_UMP_BUY_IN_SHOP_COUNT = "buyInShopCount";
+    public static final String COL_UMP_REGULAR_BOSS_HIT_COUNT = "regularBossHitCount";
+    public static final String COL_UMP_EASY_NORMAL_IMPORTANT_TASK_COUNT = "easyNormalImportantTaskCount";
+    public static final String COL_UMP_OTHER_TASKS_COUNT = "otherTasksCount";
+    public static final String COL_UMP_NO_UNRESOLVED_TASKS_COMPLETED = "noUnresolvedTasksCompleted";
+    public static final String COL_UMP_LAST_MESSAGE_SENT_DATE = "lastMessageSentDate";
+    public static final String COL_UMP_MESSAGE_SENT_DAYS_COUNT = "messageSentDaysCount";
+    private static final String CREATE_TABLE_MISSION_ACTIVITY_LOG =
+            "CREATE TABLE " + TABLE_MISSION_ACTIVITY_LOG + " (" +
+                    COL_MISSION_LOG_ID + " TEXT PRIMARY KEY," +
+                    COL_MISSION_LOG_SPECIAL_MISSION_ID + " TEXT NOT NULL," +
+                    COL_MISSION_LOG_USER_ID + " TEXT NOT NULL," +
+                    COL_MISSION_LOG_USERNAME + " TEXT NOT NULL," +
+                    COL_MISSION_LOG_ACTIVITY_DESCRIPTION + " TEXT NOT NULL," +
+                    COL_MISSION_LOG_DAMAGE_DEALT + " INTEGER NOT NULL," +
+                    COL_MISSION_LOG_TIMESTAMP + " INTEGER NOT NULL," +
+                    "FOREIGN KEY(" + COL_MISSION_LOG_SPECIAL_MISSION_ID + ") REFERENCES " + TABLE_SPECIAL_MISSIONS + "(" + COL_SM_ID + ") ON DELETE CASCADE," +
+                    "FOREIGN KEY(" + COL_MISSION_LOG_USER_ID + ") REFERENCES " + TABLE_USERS + "(" + COL_USER_ID + ") ON DELETE CASCADE" +
+                    ");";
+
+    private static final String CREATE_TABLE_SPECIAL_MISSIONS =
+            "CREATE TABLE " + TABLE_SPECIAL_MISSIONS + " (" +
+                    COL_SM_ID + " TEXT PRIMARY KEY," +
+                    COL_SM_ALLIANCE_ID + " TEXT NOT NULL," +
+                    COL_SM_START_TIME + " INTEGER NOT NULL," +
+                    COL_SM_END_TIME + " INTEGER NOT NULL," +
+                    COL_SM_TOTAL_BOSS_HP + " INTEGER NOT NULL," +
+                    COL_SM_CURRENT_BOSS_HP + " INTEGER NOT NULL," +
+                    COL_SM_COMPLETED_SUCCESSFULLY + " INTEGER NOT NULL," +
+                    COL_SM_IS_ACTIVE + " INTEGER NOT NULL," +
+                    COL_SM_NUM_PARTICIPATING_MEMBERS + " INTEGER NOT NULL," +
+                    COL_SM_REWARD_AWARDED + " INTEGER NOT NULL," +
+                    "FOREIGN KEY(" + COL_SM_ALLIANCE_ID + ") REFERENCES " + TABLE_ALLIANCES + "(" + COL_ALLIANCE_ID + ") ON DELETE CASCADE" +
+                    ");";
+
+    private static final String CREATE_TABLE_USER_MISSION_PROGRESS =
+            "CREATE TABLE " + TABLE_USER_MISSION_PROGRESS + " (" +
+                    COL_UMP_ID + " TEXT PRIMARY KEY," +
+                    COL_UMP_SPECIAL_MISSION_ID + " TEXT NOT NULL," +
+                    COL_UMP_USER_ID + " TEXT NOT NULL," +
+                    COL_UMP_USERNAME + " TEXT NOT NULL," +
+                    COL_UMP_BUY_IN_SHOP_COUNT + " INTEGER DEFAULT 0," +
+                    COL_UMP_REGULAR_BOSS_HIT_COUNT + " INTEGER DEFAULT 0," +
+                    COL_UMP_EASY_NORMAL_IMPORTANT_TASK_COUNT + " INTEGER DEFAULT 0," +
+                    COL_UMP_OTHER_TASKS_COUNT + " INTEGER DEFAULT 0," +
+                    COL_UMP_NO_UNRESOLVED_TASKS_COMPLETED + " INTEGER DEFAULT 0," +
+                    COL_UMP_LAST_MESSAGE_SENT_DATE + " INTEGER," +
+                    COL_UMP_MESSAGE_SENT_DAYS_COUNT + " INTEGER DEFAULT 0," +
+                    "FOREIGN KEY(" + COL_UMP_SPECIAL_MISSION_ID + ") REFERENCES " + TABLE_SPECIAL_MISSIONS + "(" + COL_SM_ID + ") ON DELETE CASCADE," +
+                    "FOREIGN KEY(" + COL_UMP_USER_ID + ") REFERENCES " + TABLE_USERS + "(" + COL_USER_ID + ") ON DELETE CASCADE," +
+                    "UNIQUE(" + COL_UMP_SPECIAL_MISSION_ID + ", " + COL_UMP_USER_ID + ")" +
+                    ");";
+
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -220,12 +504,24 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL(CREATE_TABLE_USER_BADGES);
         db.execSQL(CREATE_TABLE_EQUIPMENT);
         db.execSQL(CREATE_TABLE_USER_EQUIPMENT);
-
+        db.execSQL(CREATE_TABLE_USER_PROFILE);
+        db.execSQL(CREATE_TABLE_USER_CATEGORY_STATISTICS);
+        db.execSQL(CREATE_TABLE_FRIENDSHIPS);
+        db.execSQL(CREATE_TABLE_ALLIANCES);
+        db.execSQL(CREATE_TABLE_ALLIANCE_INVITATIONS);
+        db.execSQL(CREATE_TABLE_ALLIANCE_MESSAGES);
+        db.execSQL(CREATE_TABLE_BOSS_DATA);
+        db.execSQL(CREATE_TABLE_BATTLE_HISTORY);
+        db.execSQL(CREATE_TABLE_MISSION_ACTIVITY_LOG);
+        db.execSQL(CREATE_TABLE_SPECIAL_MISSIONS);
+        db.execSQL(CREATE_TABLE_USER_MISSION_PROGRESS);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Brisanje stare šeme
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_MISSION_ACTIVITY_LOG);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_USER_MISSION_PROGRESS);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_SPECIAL_MISSIONS);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_CATEGORIES);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_TASK_TEMPLATES);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_TASK_INSTANCES);
@@ -235,8 +531,15 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_USER_BADGES);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_EQUIPMENT);
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_USER_EQUIPMENT);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_USER_PROFILE);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_USER_CATEGORY_STATISTICS);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_FRIENDSHIPS);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_ALLIANCE_MESSAGES);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_ALLIANCE_INVITATIONS);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_ALLIANCES);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_BATTLE_HISTORY);
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_BOSS_DATA);
 
-        // Kreiranje nove šeme koja sada uključuje USERS
         onCreate(db);
     }
 }

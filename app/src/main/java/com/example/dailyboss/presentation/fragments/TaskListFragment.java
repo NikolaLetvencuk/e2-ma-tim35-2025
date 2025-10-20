@@ -15,6 +15,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.dailyboss.R;
+import com.example.dailyboss.data.SharedPreferencesHelper;
+import com.example.dailyboss.presentation.fragments.EquipmentActivationFragment;
 import com.example.dailyboss.presentation.adapters.TaskAdapter;
 import com.example.dailyboss.data.dto.TaskItemDto;
 import com.example.dailyboss.domain.enums.TaskStatus;
@@ -39,6 +41,7 @@ public class TaskListFragment extends Fragment {
     private TaskInstanceRepositoryImpl taskInstanceRepositoryImpl;
     private TaskTemplateRepositoryImpl taskTemplateRepositoryImpl;
     private CategoryRepositoryImpl categoryRepositoryImpl;
+    private SharedPreferencesHelper prefs;
 
     private boolean oneTime = true;
     private boolean repeating = true;
@@ -56,11 +59,17 @@ public class TaskListFragment extends Fragment {
 
         rvAllTasks.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new TaskAdapter(new ArrayList<>());
+        
+        adapter.setOnLevelUpListener((newLevel, newTitle) -> {
+            openEquipmentActivationFragment();
+        });
+        
         rvAllTasks.setAdapter(adapter);
 
         taskTemplateRepositoryImpl = new TaskTemplateRepositoryImpl(getContext());
         taskInstanceRepositoryImpl = new TaskInstanceRepositoryImpl(getContext());
         categoryRepositoryImpl = new CategoryRepositoryImpl(getContext());
+        prefs = new SharedPreferencesHelper(getContext());
 
         loadAllTasks();
 
@@ -81,23 +90,31 @@ public class TaskListFragment extends Fragment {
 
         long now = System.currentTimeMillis();
 
-        for (TaskInstance instance : allInstances) {
+        List<TaskInstance> filteredInstances = allInstances.stream()
+                .filter(instance -> {
+                    boolean isCurrentOrFuture = instance.getInstanceDate() >= now;
+
+                    boolean isActive = instance.getStatus() == TaskStatus.ACTIVE;
+
+                    return isCurrentOrFuture || isActive;
+                })
+                .collect(Collectors.toList());
+
+
+        for (TaskInstance instance : filteredInstances) {
             TaskTemplate template = templatesMap.get(instance.getTemplateId());
             if (template != null) {
-                if (instance.getInstanceDate() >= now || instance.getStatus() == TaskStatus.ACTIVE) {
-
-                    String color = categoryRepositoryImpl.getColorById(template.getCategoryId());
-                    TaskItemDto dto = new TaskItemDto(
-                            instance.getInstanceId(),
-                            template.getName(),
-                            template.getDescription(),
-                            instance.getInstanceDate(),
-                            instance.getStatus().toString(),
-                            color,
-                            template.isRecurring()
-                    );
-                    allTasks.add(dto);
-                }
+                String color = categoryRepositoryImpl.getColorById(template.getCategoryId());
+                TaskItemDto dto = new TaskItemDto(
+                        instance.getInstanceId(),
+                        template.getName(),
+                        template.getDescription(),
+                        instance.getInstanceDate(),
+                        instance.getStatus().toString(),
+                        color,
+                        template.isRecurring()
+                );
+                allTasks.add(dto);
             }
         }
 
@@ -113,6 +130,23 @@ public class TaskListFragment extends Fragment {
                     .addToBackStack(null)
                     .commit();
         });
+
+        adapter.setOnTaskDeletedListener(() -> {
+            loadAllTasks();
+        });
+
+        adapter.setOnLevelUpListener((newLevel, newTitle) -> {
+            EquipmentActivationFragment equipmentActivationFragment = new EquipmentActivationFragment();
+            Bundle args = new Bundle();
+            args.putString("userId", prefs.getLoggedInUserId());
+            equipmentActivationFragment.setArguments(args);
+
+            requireActivity().getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, equipmentActivationFragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
+
         rvAllTasks.setAdapter(adapter);
     }
 
@@ -147,6 +181,23 @@ public class TaskListFragment extends Fragment {
                     .addToBackStack(null)
                     .commit();
         });
+        
+        adapter.setOnTaskDeletedListener(() -> {
+            loadAllTasks();
+        });
+        
+        adapter.setOnLevelUpListener((newLevel, newTitle) -> {
+            EquipmentActivationFragment equipmentActivationFragment = new EquipmentActivationFragment();
+            Bundle args = new Bundle();
+            args.putString("userId", prefs.getLoggedInUserId());
+            equipmentActivationFragment.setArguments(args);
+            
+            requireActivity().getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, equipmentActivationFragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
+        
         rvAllTasks.setAdapter(adapter);
 
         updateButtonsState();
@@ -175,5 +226,27 @@ public class TaskListFragment extends Fragment {
             btnRepeatingTasks.setBackgroundTintList(inactiveTint);
             btnRepeatingTasks.setTextColor(inactiveTextColor);
         }
+    }
+
+    private void openEquipmentActivationFragment() {
+        EquipmentActivationFragment equipmentActivationFragment = new EquipmentActivationFragment();
+        
+        Bundle args = new Bundle();
+        args.putString("currentUserId", getCurrentUserId());
+        equipmentActivationFragment.setArguments(args);
+        
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, equipmentActivationFragment)
+                .addToBackStack(null)
+                .commit();
+    }
+
+    private String getCurrentUserId() {
+        if (getArguments() != null && getArguments().containsKey("currentUserId")) {
+            return getArguments().getString("currentUserId");
+        }
+        
+        return prefs.getLoggedInUserId();
     }
 }

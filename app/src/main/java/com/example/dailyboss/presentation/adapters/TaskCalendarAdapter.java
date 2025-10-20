@@ -61,13 +61,11 @@ public class TaskCalendarAdapter {
         for (int i = 0; i < 7; i++) {
             LocalDate date = startOfWeek.plusDays(i);
 
-            // Labela dana
             TextView dayLabel = (TextView) inflater.inflate(R.layout.item_day_label, daysContainer, false);
             dayLabel.setText(date.getDayOfWeek().toString().substring(0, 3) + "\n" + date.getDayOfMonth());
             dayLabel.setLayoutParams(new LinearLayout.LayoutParams(dayWidth, ViewGroup.LayoutParams.WRAP_CONTENT));
             daysContainer.addView(dayLabel);
 
-            // Vertical divider
             if (i < 6) {
                 View divider = new View(inflater.getContext());
                 LinearLayout.LayoutParams dividerParams = new LinearLayout.LayoutParams(2, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -76,7 +74,6 @@ public class TaskCalendarAdapter {
                 daysContainer.addView(divider);
             }
 
-            // Column za taskove
             FrameLayout dayColumn = new FrameLayout(inflater.getContext());
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dayWidth, ViewGroup.LayoutParams.MATCH_PARENT);
             lp.setMargins(2, 2, 2, 2);
@@ -84,7 +81,6 @@ public class TaskCalendarAdapter {
             dayColumn.setBackgroundColor(Color.parseColor("#f8f8f8"));
             daysColumnsContainer.addView(dayColumn);
 
-            // Taskovi za taj dan
             for (TaskItemDto task : tasks) {
                 LocalDate taskDate = Instant.ofEpochMilli(task.getStartTime())
                         .atZone(ZoneId.systemDefault())
@@ -154,7 +150,6 @@ public class TaskCalendarAdapter {
 
         LayoutInflater inflater = this.inflater;
 
-        // ScrollView za vertikalni scroll
         ScrollView verticalScrollView = new ScrollView(inflater.getContext());
         LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -163,7 +158,6 @@ public class TaskCalendarAdapter {
         verticalScrollView.setLayoutParams(scrollParams);
         verticalScrollView.setFillViewport(true);
 
-        // Column u ScrollView
         LinearLayout dayColumn = new LinearLayout(inflater.getContext());
         dayColumn.setOrientation(LinearLayout.VERTICAL);
         DisplayMetrics displayMetrics = inflater.getContext().getResources().getDisplayMetrics();
@@ -176,10 +170,8 @@ public class TaskCalendarAdapter {
         dayColumn.setBackgroundColor(Color.parseColor("#ffffff"));
         verticalScrollView.addView(dayColumn);
 
-        // Dodaj ScrollView u container
         daysColumnsContainer.addView(verticalScrollView);
 
-        // Labela dana
         TextView dayLabel = (TextView) inflater.inflate(R.layout.item_day_label, daysContainer, false);
         dayLabel.setText(date.getDayOfWeek().toString() + "\n" + date.getDayOfMonth());
         dayLabel.setPadding(16, 8, 16, 8);
@@ -187,10 +179,8 @@ public class TaskCalendarAdapter {
         dayLabel.setGravity(android.view.Gravity.CENTER);
         daysContainer.addView(dayLabel);
 
-        // Povećanje visine skale (opciono)
         timeScaleColumn.setMinimumHeight(24 * PIXELS_PER_HOUR);
 
-        // Filtriraj i sortiraj taskove za dan
         List<TaskItemDto> dayTasks = new ArrayList<>();
         for (TaskItemDto task : tasks) {
             LocalDate taskDate = Instant.ofEpochMilli(task.getStartTime())
@@ -200,7 +190,6 @@ public class TaskCalendarAdapter {
         }
         dayTasks.sort((t1, t2) -> Long.compare(t1.getStartTime(), t2.getStartTime()));
 
-        // Dodavanje taskova u column
         for (TaskItemDto task : dayTasks) {
             Calendar cal = Calendar.getInstance();
             cal.setTimeInMillis(task.getStartTime());

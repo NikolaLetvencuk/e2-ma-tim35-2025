@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.graphics.Bitmap;
 import android.graphics.Color; // Dodato za boju QR koda
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem; // Dodato za PopupMenu
 import android.view.View;
@@ -21,71 +22,84 @@ import androidx.fragment.app.Fragment;
 import com.example.dailyboss.R;
 import com.example.dailyboss.data.SharedPreferencesHelper;
 import com.example.dailyboss.data.repository.UserRepository;
+import com.example.dailyboss.data.repository.UserProfileRepository;
 import com.example.dailyboss.data.repository.UserStatisticRepository;
 import com.example.dailyboss.domain.model.User;
+import com.example.dailyboss.domain.model.UserProfile;
 import com.example.dailyboss.domain.model.UserStatistic;
-import com.example.dailyboss.presentation.fragments.EquipmentFragment; // Dodato
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.WriterException;
-import com.google.zxing.qrcode.QRCodeWriter; // Dodato, umesto BarcodeEncoder
-// import com.journeyapps.barcodescanner.BarcodeEncoder; // Uklonjeno, koristimo QRCodeWriter direktno
+import com.google.zxing.qrcode.QRCodeWriter;
 
 public class UserProfileFragment extends Fragment {
 
     private ImageView imgAvatar;
-    private TextView tvUsername, tvLevelTitle, tvXP, tvPP, tvCoins;
-    // imgQRCode vise nije direktno u layoutu, ali ga mozemo koristiti za generisanje
-    // private ImageView imgQRCode; // Uklonjeno, jer se QR kod prikazuje u dijalogu
-    private ImageView btnOptions; // NOVO: Dugme za tri tacke (options menu)
+    private TextView tvUsername, tvLevelTitle, tvXP;
+    private TextView tvPP, tvCoins;
 
-    // private Button btnChangePassword; // Uklonjeno, jer je opcija u meniju
+    private ImageView btnOptions;
+    private Button btnViewLevelProgress;
 
     private UserRepository userRepository;
-    private UserStatisticRepository statRepository;
+    private UserProfileRepository statRepository;
+    private UserStatisticRepository userStatisticRepository;
 
     private User currentUser;
-    private UserStatistic currentStats;
+    private UserProfile currentStats;
+    private String displayUserId;
+    private boolean isOwnProfile;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_user_profile, container, false); // Pretpostavka da je fragment_user_profile tvoj azurirani XML
+        View view = inflater.inflate(R.layout.fragment_user_profile, container, false);
 
         imgAvatar = view.findViewById(R.id.imgAvatar);
-        // imgQRCode = view.findViewById(R.id.qr_code_image); // Nema ga vise u glavnom layoutu, ukloni ga
         tvUsername = view.findViewById(R.id.tvUsername);
         tvLevelTitle = view.findViewById(R.id.tvLevelTitle);
         tvXP = view.findViewById(R.id.tvXP);
         tvPP = view.findViewById(R.id.tvPP);
         tvCoins = view.findViewById(R.id.tvCoins);
-        btnOptions = view.findViewById(R.id.btnOptions); // Inicijalizacija novog dugmeta za opcije
-        // btnChangePassword = view.findViewById(R.id.btnChangePassword); // Ovo dugme je sada sakriveno u XML-u, ili ga mozes ukloniti
+        btnOptions = view.findViewById(R.id.btnOptions);
+        btnViewLevelProgress = view.findViewById(R.id.btnViewLevelProgress);
 
         userRepository = new UserRepository(requireContext());
-        statRepository = new UserStatisticRepository(requireContext());
+        statRepository = new UserProfileRepository(requireContext());
+        userStatisticRepository = new UserStatisticRepository(requireContext());
+
+        Bundle args = getArguments();
+        String loggedInUserId = new SharedPreferencesHelper(requireContext()).getLoggedInUserId();
+
+        if (args != null && args.getString("targetUserId") != null) {
+            displayUserId = args.getString("targetUserId");
+            isOwnProfile = displayUserId.equals(loggedInUserId);
+        } else {
+            displayUserId = loggedInUserId;
+            isOwnProfile = true;
+        }
 
         loadUserData();
 
-        // Listener za dugme opcija (tri tačke)
-        btnOptions.setOnClickListener(v -> showOptionsMenu(v));
+        if (isOwnProfile) {
+            btnOptions.setVisibility(View.VISIBLE);
+            btnOptions.setOnClickListener(this::showOptionsMenu);
+        } else {
+            btnOptions.setVisibility(View.GONE);
+        }
 
-        // btnChangePassword.setOnClickListener(v -> showChangePasswordDialog()); // Ovaj listener se sada premesta u PopupMenu
+        btnViewLevelProgress.setOnClickListener(v -> openLevelProgressFragment());
 
         return view;
     }
 
-    // Dodato za onViewCreated kako bi se pozvao super metod
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        // Ovde mozes dodati dodatnu logiku koja zavisi od view-a nakon sto je kreiran
     }
 
-
     private void loadUserData() {
-        SharedPreferencesHelper prefs = new SharedPreferencesHelper(requireContext());
-        String userId = prefs.getLoggedInUserId();
+        String userId = displayUserId;
 
         if (userId == null) {
             Toast.makeText(getContext(), "Nema ulogovanog korisnika", Toast.LENGTH_SHORT).show();
@@ -95,19 +109,14 @@ public class UserProfileFragment extends Fragment {
         userRepository.getUserData(userId, new UserRepository.UserDataListener() {
             @Override
             public void onSuccess(User user) {
+                if (!isAdded()) return;
                 currentUser = user;
+
                 tvUsername.setText(user.getUsername());
-                // btnChangePassword.setEnabled(true); // Dugme je sada u meniju, ne treba ga direktno enable/disable
-                String avatarName = user.getAvatar(); // npr. "avatar_1"
+
+                String avatarName = user.getAvatar();
                 int resId = getResources().getIdentifier(avatarName, "drawable", requireContext().getPackageName());
-                if (resId != 0) {
-                    imgAvatar.setImageResource(resId);
-                } else {
-                    imgAvatar.setImageResource(R.drawable.avatar_1); // default avatar
-                }
-                // QR kod se vise ne generise odmah ovde, vec na zahtev
-                // String qrData = "user_id:" + userId;
-                // generateQRCode(qrData); // Uklonjeno
+                imgAvatar.setImageResource(resId != 0 ? resId : R.drawable.avatar_1);
 
                 loadUserBadgesFragment();
                 loadUserEquipmentFragment();
@@ -119,15 +128,29 @@ public class UserProfileFragment extends Fragment {
             }
         });
 
-        // Isto za statistiku
-        statRepository.getUserStatistic(userId, new UserStatisticRepository.UserStatisticListener() {
+        statRepository.getUserStatistic(userId, new UserProfileRepository.UserStatisticListener() {
             @Override
-            public void onSuccess(UserStatistic statistic) {
+            public void onSuccess(UserProfile statistic) {
+                if (!isAdded()) return;
                 currentStats = statistic;
-                tvLevelTitle.setText("Level " + statistic.getLevel() + " - Početna titula");
+                UserStatistic userStatistic = userStatisticRepository.getUserStatistic(statistic.getUserId());
+
+                com.example.dailyboss.service.LevelingService levelingService = new com.example.dailyboss.service.LevelingService(requireContext());
+                String currentTitle = levelingService.getTitleForLevel(statistic.getLevel());
+
+                tvLevelTitle.setText("Level " + statistic.getLevel() + " - " + currentTitle);
                 tvXP.setText("XP: " + statistic.getExperiencePoints());
-                tvPP.setText("PP: " + statistic.getWinStreak()); // Pretpostavljam da winStreak predstavlja Power Points
-                tvCoins.setText("Coins: 0"); // TODO: Dodao sam coins ovde ako statistika sadrzi
+
+                if (isOwnProfile) {
+                    tvPP.setVisibility(View.VISIBLE);
+                    tvCoins.setVisibility(View.VISIBLE);
+                    tvPP.setText("PP: " + userStatistic.getPowerPoints());
+                    tvCoins.setText("Coins: " + userStatistic.getCoins());
+                } else {
+                    // Ako je tuđi profil, sakrij Power Points i Coins
+                    tvPP.setVisibility(View.GONE);
+                    tvCoins.setVisibility(View.GONE);
+                }
             }
 
             @Override
@@ -137,47 +160,54 @@ public class UserProfileFragment extends Fragment {
         });
     }
 
-    // NOVA metoda za prikaz menija sa opcijama
+
     private void showOptionsMenu(View v) {
         PopupMenu popup = new PopupMenu(getContext(), v);
-        popup.getMenuInflater().inflate(R.menu.profile_options_menu, popup.getMenu()); // Uveriti se da je ovo tačan put do menija
 
-        popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                int itemId = item.getItemId(); // Koristi itemId direktno
+        if (isOwnProfile) {
+            popup.getMenuInflater().inflate(R.menu.profile_options_menu, popup.getMenu());
+        } else {
+            popup.getMenuInflater().inflate(R.menu.friend_profile_options_menu, popup.getMenu());
+        }
 
-                if (itemId == R.id.action_show_qr) {
-                    showQrCodeDialog();
-                    return true;
-                } else if (itemId == R.id.action_change_password) {
-                    showChangePasswordDialog();
-                    return true;
-                }
-                return false;
+        popup.setOnMenuItemClickListener(item -> {
+            int itemId = item.getItemId();
+
+            if (itemId == R.id.action_show_qr) {
+                showQrCodeDialog();
+                return true;
+            } else if (itemId == R.id.action_change_password) {
+                showChangePasswordDialog();
+                return true;
+            } else if (itemId == R.id.action_statistics) {
+                requireActivity().getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, new StatisticsFragment())
+                        .addToBackStack(null)
+                        .commit();
+                return true;
+            } else if (itemId == R.id.action_logout) {
+                performLogout();
+                return true;
             }
+            return false;
         });
         popup.show();
     }
 
-    // PREMEŠTENA i IZMENJENA metoda za generisanje i prikaz QR koda u dijalogu
     private void showQrCodeDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         LayoutInflater inflater = getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_show_qr_code, null); // Layout za QR dijalog
+        View dialogView = inflater.inflate(R.layout.dialog_show_qr_code, null);
         ImageView qrImage = dialogView.findViewById(R.id.dialog_qr_code_image);
         TextView qrInfo = dialogView.findViewById(R.id.dialog_qr_info_text);
 
-        // Generisanje QR koda
-        String userId = new SharedPreferencesHelper(requireContext()).getLoggedInUserId();
-        String qrData = "user_id:" + userId; // Podaci za QR kod, npr. ID korisnika
+        String qrData = "user_id:" + displayUserId;
         if (currentUser != null) {
-            qrData = "user_id:" + currentUser.getId() + ",username:" + currentUser.getUsername(); // Detaljniji QR kod
+            qrData = "user_id:" + currentUser.getId() + ",username:" + currentUser.getUsername();
         }
 
         try {
-            // Koristimo QRCodeWriter direktno iz zxing-core
-            Bitmap qrBitmap = generateQrCodeBitmap(qrData, 400, 400); // 400x400 piksela
+            Bitmap qrBitmap = generateQrCodeBitmap(qrData, 400, 400);
             qrImage.setImageBitmap(qrBitmap);
             qrInfo.setText("Skeniraj za dodavanje " + (currentUser != null ? currentUser.getUsername() : "prijatelja") + "!");
         } catch (WriterException e) {
@@ -187,13 +217,12 @@ public class UserProfileFragment extends Fragment {
         }
 
         builder.setView(dialogView)
-                .setTitle("Vaš QR kod")
+                .setTitle("QR kod")
                 .setPositiveButton("Zatvori", (dialog, id) -> dialog.dismiss());
         AlertDialog dialog = builder.create();
         dialog.show();
     }
 
-    // Pomoćna metoda za generisanje QR koda (prilagođena za zxing-core)
     private Bitmap generateQrCodeBitmap(String text, int width, int height) throws WriterException {
         QRCodeWriter writer = new QRCodeWriter();
         com.google.zxing.common.BitMatrix bitMatrix = writer.encode(text, BarcodeFormat.QR_CODE, width, height);
@@ -207,31 +236,14 @@ public class UserProfileFragment extends Fragment {
         return Bitmap.createBitmap(pixels, width, height, Bitmap.Config.RGB_565);
     }
 
-
-    // Uklonjena stara generateQRCode metoda jer se koristi nova generateQrCodeBitmap
-    /*
-    private void generateQRCode(String data) {
-        try {
-            BarcodeEncoder barcodeEncoder = new BarcodeEncoder();
-            Bitmap bitmap = barcodeEncoder.encodeBitmap(data, BarcodeFormat.QR_CODE, 400, 400);
-            imgQRCode.setImageBitmap(bitmap);
-        } catch (WriterException e) {
-            e.printStackTrace();
-        }
-    }
-    */
-
     private void loadUserBadgesFragment() {
         UserBadgesFragment badgesFragment = new UserBadgesFragment();
-
         Bundle args = new Bundle();
         args.putString("userId", currentUser.getId());
         badgesFragment.setArguments(args);
 
-        // Proverite da li je fragment_user_profile ID root elementa ili sadrži fragmentUserBadges
-        // Ako je fragment_user_profile layout ime datoteke, onda je R.id.fragmentUserBadges ID za Framelayout unutar tog XML-a
-        if (isAdded() && getParentFragmentManager() != null) { // Provera da je fragment prikačen
-            getParentFragmentManager().beginTransaction()
+        if (isAdded()) {
+            getChildFragmentManager().beginTransaction()
                     .replace(R.id.fragmentUserBadges, badgesFragment)
                     .commit();
         }
@@ -239,19 +251,19 @@ public class UserProfileFragment extends Fragment {
 
     private void loadUserEquipmentFragment() {
         EquipmentFragment equipmentFragment = new EquipmentFragment();
+        String targetId = displayUserId;
 
         Bundle args = new Bundle();
-        args.putString("userId", currentUser.getId());
+        args.putString("userId", targetId);
         equipmentFragment.setArguments(args);
 
-        if (isAdded() && getParentFragmentManager() != null) { // Provera da je fragment prikačen
-            getParentFragmentManager().beginTransaction()
+        if (isAdded()) {
+            getChildFragmentManager().beginTransaction()
                     .replace(R.id.fragmentUserEqupiment, equipmentFragment)
                     .commit();
         }
     }
 
-    // Metoda za promenu lozinke ostaje ista, samo je poziv premešten
     private void showChangePasswordDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_change_password, null); // Pretpostavka da imas dialog_change_password.xml
@@ -262,7 +274,7 @@ public class UserProfileFragment extends Fragment {
 
         builder.setView(dialogView)
                 .setTitle("Promeni lozinku")
-                .setPositiveButton("Sačuvaj", null) // Postavljamo null, listener dodajemo kasnije
+                .setPositiveButton("Sačuvaj", null)
                 .setNegativeButton("Otkaži", (dialog, which) -> dialog.dismiss());
 
         AlertDialog dialog = builder.create();
@@ -283,14 +295,10 @@ public class UserProfileFragment extends Fragment {
                     return;
                 }
 
-                // Dodaj proveru stare lozinke pre promene
-                // U realnosti bi ovo trebalo da se radi na serveru za sigurnost
                 if (currentUser != null && !currentUser.getPassword().equals(oldPass)) { // OVA PROVERA NIJE SIGURNA! Password se NE ČUVA u User objektu na klijentu!
                     Toast.makeText(getContext(), "Pogrešna stara lozinka", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                // Sigurniji pristup bi bio da UserRepository ima metodu changePassword(userId, oldPassword, newPassword, listener)
-                // koja šalje i staru lozinku na server radi validacije.
 
                 userRepository.changeUserPassword(currentUser.getId(), newPass1, new UserRepository.PasswordChangeListener() {
                     @Override
@@ -308,5 +316,39 @@ public class UserProfileFragment extends Fragment {
         });
 
         dialog.show();
+    }
+
+    private void openLevelProgressFragment() {
+        requireActivity().getSupportFragmentManager().beginTransaction()
+                .replace(R.id.fragment_container, new LevelProgressFragment())
+                .addToBackStack(null)
+                .commit();
+    }
+
+    private void performLogout() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Odjava")
+                .setMessage("Da li si siguran da želiš da se odjaviš?")
+                .setPositiveButton("Da", (dialog, which) -> {
+                    SharedPreferencesHelper prefs = new SharedPreferencesHelper(requireContext());
+                    prefs.clearLoggedInUser();
+                    
+                    com.example.dailyboss.service.AuthService authService =
+                            new com.example.dailyboss.service.AuthService(requireContext());
+                    authService.logout();
+                    
+                    android.content.Intent intent = new android.content.Intent(
+                            requireActivity(), 
+                            com.example.dailyboss.presentation.activities.AuthenticationActivity.class
+                    );
+                    intent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | 
+                                   android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    requireActivity().finish();
+                    
+                    Toast.makeText(getContext(), "Uspešno si se odjavio", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Otkaži", null)
+                .show();
     }
 }

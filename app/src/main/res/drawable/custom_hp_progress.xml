@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Pozadina (Track) -->
+    <item android:id="@android:id/background">
+        <shape android:shape="rectangle">
+            <solid android:color="#424242" />
+            <stroke
+                android:width="2dp" 
+            android:color="#8B4513" />
+        </shape>
+    </item>
+
+    <!-- Sekundarni progress (ako ga imaš, npr. za shield) -->
+    <item android:id="@android:id/secondaryProgress">
+        <clip>
+            <shape android:shape="rectangle">
+                <solid android:color="#808080" /> <!-- Svjetlija siva za sekundarni progress -->
+            </shape>
+        </clip>
+    </item>
+
+    <!-- Glavni progress (Popunjeni dio) -->
+    <item android:id="@android:id/progress">
+        <clip>
+            <!-- Ovde se može koristiti složeniji drawable sa zakošenim krajevima -->
+            <!-- Nažalost, direktno u XML-u bez SDK crtanja je teško dobiti perfektno zakošene krajeve kao na slici
+                 sa običnim shape-om. Ovo će ti dati pravougaoni, ali možeš probati sa gradientom ili
+                 slikom kao pozadinom ako želiš više detalja. -->
+            <shape android:shape="rectangle">
+                <solid android:color="#FF0000" /> <!-- Crvena boja za progress -->
+            </shape>
+        </clip>
+    </item>
+
+</layer-list>

@@ -36,10 +36,9 @@ public class LoginFragment extends Fragment {
     private AuthService authService;
     private OnFragmentInteractionListener fragmentInteractionListener; // Listener za komunikaciju sa Activityjem
 
-    // Interface za komunikaciju sa Activityjem
     public interface OnFragmentInteractionListener {
         void onNavigateToRegister();
-        void onLoginSuccess(); // Kad je prijava uspešna, obavesti Activity
+        void onLoginSuccess();
     }
 
     @Override
@@ -56,7 +55,6 @@ public class LoginFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Inicijalizuj AuthService. Prosleđujemo Context iz fragmenta.
         authService = new AuthService(requireContext());
     }
 

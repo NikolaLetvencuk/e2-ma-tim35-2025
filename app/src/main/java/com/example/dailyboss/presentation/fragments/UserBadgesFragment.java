@@ -1,6 +1,7 @@
 package com.example.dailyboss.presentation.fragments;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,11 +44,9 @@ public class UserBadgesFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_user_badges, container, false);
 
         rvBadges = view.findViewById(R.id.rvBadges);
-        tvTotalBadges = view.findViewById(R.id.tvTotalBadges);
 
         rvBadges.setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.HORIZONTAL, false));
         badgeAdapter = new BadgeAdapter(getContext(), badgeList);
-        rvBadges.setAdapter(badgeAdapter);
 
         userBadgeRepository = new UserBadgeRepository(requireContext());
         badgeRepository = new BadgeRepository(requireContext());
@@ -56,6 +55,7 @@ public class UserBadgesFragment extends Fragment {
             userId = getArguments().getString("userId");
             loadUserBadges();
         }
+        rvBadges.setAdapter(badgeAdapter);
 
         return view;
     }
@@ -67,7 +67,7 @@ public class UserBadgesFragment extends Fragment {
         }
 
         List<Badge> userBadges = userBadgeRepository.getBadgesForUser(userId);
-
+        Log.d("TAG", "loadUserBadges: " + userBadges.size());
         badgeList.clear();
         for (Badge ub : userBadges) {
             Badge badge = badgeRepository.getBadge(ub.getId());

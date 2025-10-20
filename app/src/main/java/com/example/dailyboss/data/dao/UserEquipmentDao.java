@@ -102,10 +102,7 @@ public class UserEquipmentDao {
         db.close();
         return rowsAffected > 0;
     }
-
-    // Dodatna metoda za pronalaženje specifične opreme korisnika (ako postoji samo jedna instanca)
-    // Npr. ako korisnik može da ima samo jedan "Mač snage", ali ga može unapređivati
-    public UserEquipment getUserSpecificEquipment(String userId, String equipmentId) {
+     public UserEquipment getUserSpecificEquipment(String userId, String equipmentId) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.query(DatabaseHelper.TABLE_USER_EQUIPMENT, null,
                 DatabaseHelper.COL_USER_EQUIPMENT_USER_ID + " = ? AND " +
@@ -129,5 +126,31 @@ public class UserEquipmentDao {
         cursor.close();
         db.close();
         return userEquipment;
+    }
+
+    public List<UserEquipment> getAllUserEquipmentForUser(String userId) {
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = db.query(DatabaseHelper.TABLE_USER_EQUIPMENT, null,
+                DatabaseHelper.COL_USER_EQUIPMENT_USER_ID + " = ?",
+                new String[]{userId},
+                null, null, null);
+
+        List<UserEquipment> userEquipmentList = new ArrayList<>();
+        while (cursor.moveToNext()) {
+            UserEquipment userEquipment = new UserEquipment(
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_EQUIPMENT_ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_EQUIPMENT_USER_ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_EQUIPMENT_EQUIPMENT_ID)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_EQUIPMENT_QUANTITY)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_EQUIPMENT_IS_ACTIVE)) == 1,
+                    cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_EQUIPMENT_REMAINING_DURATION_BATTLES)),
+                    cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_EQUIPMENT_ACTIVATION_TIMESTAMP)),
+                    cursor.getDouble(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_EQUIPMENT_CURRENT_BONUS_VALUE))
+            );
+            userEquipmentList.add(userEquipment);
+        }
+        cursor.close();
+        db.close();
+        return userEquipmentList;
     }
 }

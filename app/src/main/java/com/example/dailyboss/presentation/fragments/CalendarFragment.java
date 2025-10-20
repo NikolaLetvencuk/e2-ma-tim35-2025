@@ -159,30 +159,15 @@ public class CalendarFragment extends Fragment {
             });
         }
 
-        // Click Listeneri za dugmad
         btnDay.setOnClickListener(v -> switchToDayView());
         btnWeek.setOnClickListener(v -> switchToWeekView());
         btnMonth.setOnClickListener(v -> switchToMonthView());
 
-        // Inicijalni prikaz je Month View, možete promeniti ovde ako želite Week/Day
         switchToMonthView();
-
-        // NOTE: Zakomentarisao sam logiku za TaskCalendarAdapter jer ona duplira
-        // logiku koju ste vratili u populateDayView i populateWeekView.
-        // Ako TaskCalendarAdapter radi Day/Week prikaz, potrebno je njega koristiti
-        // umesto da se logika duplira ovde. Trenutno koristimo logiku iz ovog fragmenta.
-        /*
-        TaskCalendarAdapter adapter = new TaskCalendarAdapter(getContext(), tasks);
-        LinearLayout daysContainer = weekCalendarRoot.findViewById(R.id.daysContainer);
-        LinearLayout timeScaleColumn = weekCalendarRoot.findViewById(R.id.timeScaleColumn);
-        adapter.setOnDateChangeListener(new TaskCalendarAdapter.OnDateChangeListener() { ... });
-        adapter.setupSwipeGestures(daysColumnsContainer, isWeek);
-        */
 
         return root;
     }
 
-    // --- LOGIKA ZA PRIKAZ ---
     private static final int COLOR_SELECTED = Color.parseColor("#424242"); // Tamno siva/Pepeljasta (skoro crna)
     private static final int COLOR_UNSELECTED = Color.parseColor("#A9A9A9"); // Svetlo siva za neselektovanoivate static final int COLOR_UNSELECTED = Color.parseColor("#CCCCCC"); // Svetlo siva za neselektovano
 
@@ -192,7 +177,6 @@ public class CalendarFragment extends Fragment {
         populateDayView(dayView);
         isWeek = false;
 
-        // NOVE BOJE ZA DUGMAD
         btnDay.setBackgroundColor(COLOR_SELECTED);
         btnWeek.setBackgroundColor(COLOR_UNSELECTED);
         btnMonth.setBackgroundColor(COLOR_UNSELECTED);
@@ -204,7 +188,6 @@ public class CalendarFragment extends Fragment {
         populateWeekView(weekStart);
         isWeek = true;
 
-        // NOVE BOJE ZA DUGMAD
         btnDay.setBackgroundColor(COLOR_UNSELECTED);
         btnWeek.setBackgroundColor(COLOR_SELECTED);
         btnMonth.setBackgroundColor(COLOR_UNSELECTED);
@@ -214,13 +197,11 @@ public class CalendarFragment extends Fragment {
         calendarView.setVisibility(View.VISIBLE);
         weekCalendarRoot.setVisibility(View.GONE);
 
-        // NOVE BOJE ZA DUGMAD
         btnDay.setBackgroundColor(COLOR_UNSELECTED);
         btnWeek.setBackgroundColor(COLOR_UNSELECTED);
         btnMonth.setBackgroundColor(COLOR_SELECTED);
     }
 
-    // --- POPUNJAVANJE WEEK VIEW-a (Vaša originalna Week logika) ---
     private void populateWeekView(LocalDate startOfWeek) {
         LocalDate endOfWeek = startOfWeek.plusDays(6);
 
@@ -237,7 +218,6 @@ public class CalendarFragment extends Fragment {
         LinearLayout daysColumnsContainer = weekCalendarRoot.findViewById(R.id.daysColumnsContainer);
         HorizontalScrollView daysScrollView = root.findViewById(R.id.daysScrollView);
 
-        // Postavljanje gesta za scroll view (kao što je bilo)
         if (daysScrollView != null) {
             daysScrollView.setOnTouchListener((v, event) -> {
                 gestureDetector.onTouchEvent(event);
@@ -251,11 +231,9 @@ public class CalendarFragment extends Fragment {
 
         LayoutInflater inflater = LayoutInflater.from(getContext());
 
-        // Računanje širine dana, u Week view je obično jednaka podela
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
         int screenWidth = displayMetrics.widthPixels;
 
-        // Uzimamo u obzir timeScaleColumn
         LinearLayout timeScaleColumn = weekCalendarRoot.findViewById(R.id.timeScaleColumn);
         int timeScaleWidth = timeScaleColumn != null ? timeScaleColumn.getWidth() : 0;
         int dayWidth = (screenWidth - timeScaleWidth) / 7;
@@ -318,11 +296,22 @@ public class CalendarFragment extends Fragment {
                 );
                 params.topMargin = (int) yPos;
                 dayColumn.addView(taskView, params);
+                taskView.setOnClickListener(v -> {
+                    Bundle bundle = new Bundle();
+                    bundle.putString("TASK_INSTANCE_ID", task.getInstanceId()); // Prosleđujemo instanceId
+
+                    TaskDetailFragment detailFragment = new TaskDetailFragment();
+                    detailFragment.setArguments(bundle);
+
+                    requireActivity().getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.fragment_container, detailFragment) // Koristite isti kontejner kao u TaskListFragment
+                            .addToBackStack(null) // Omogućava povratak na kalendar
+                            .commit();
+                });
             }
         }
     }
 
-    // --- POPUNJAVANJE DAY VIEW-a (Vaša originalna Day logika sa boljim prikazom) ---
     private void populateDayView(LocalDate date) {
         loadTasks(date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli(), date.atTime(23, 59, 59).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
 
@@ -334,7 +323,7 @@ public class CalendarFragment extends Fragment {
         if (daysScrollView != null) {
             daysScrollView.setOnTouchListener((v, event) -> {
                 gestureDetector.onTouchEvent(event);
-                return false; // false da i dalje radi normalan scroll
+                return false;
             });
         }
 
@@ -343,7 +332,6 @@ public class CalendarFragment extends Fragment {
 
         LayoutInflater inflater = LayoutInflater.from(getContext());
 
-        // ScrollView za vertikalni scroll (MATCH_PARENT da zauzme dostupan prostor)
         ScrollView verticalScrollView = new ScrollView(getContext());
         LinearLayout.LayoutParams scrollParams = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
@@ -352,19 +340,15 @@ public class CalendarFragment extends Fragment {
         verticalScrollView.setLayoutParams(scrollParams);
         verticalScrollView.setFillViewport(true);
 
-        // FrameLayout za pozicioniranje taskova (ili LinearLayout za listanje, zavisno od potrebe)
-        // Vraćamo LinearLayout jer je vaša originalna logika koristila LinearLayout za dodavanje task kartica.
         LinearLayout dayColumnLayout = new LinearLayout(getContext());
         dayColumnLayout.setOrientation(LinearLayout.VERTICAL);
 
         DisplayMetrics displayMetrics = getResources().getDisplayMetrics();
         int screenWidth = displayMetrics.widthPixels;
 
-        // Širina kolone za taskove je cela širina minus širina timeScaleColumn
         int timeScaleWidth = timeScaleColumn != null ? timeScaleColumn.getWidth() : 0;
         int dayWidth = screenWidth - timeScaleWidth;
 
-        // Ako koristite LinearLayout, visina je WRAP_CONTENT
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dayWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
         lp.setMargins(2, 2, 2, 2);
         dayColumnLayout.setLayoutParams(lp);
@@ -372,10 +356,8 @@ public class CalendarFragment extends Fragment {
 
         verticalScrollView.addView(dayColumnLayout);
 
-        // Dodaj ScrollView u daysColumnsContainer
         daysColumnsContainer.addView(verticalScrollView);
 
-        // Labela dana
         TextView dayLabel = (TextView) inflater.inflate(R.layout.item_day_label, daysContainer, false);
         dayLabel.setText(date.getDayOfWeek().toString() + "\n" + date.getDayOfMonth());
         dayLabel.setPadding(16, 8, 16, 8);
@@ -383,12 +365,10 @@ public class CalendarFragment extends Fragment {
         dayLabel.setGravity(Gravity.CENTER);
         daysContainer.addView(dayLabel);
 
-        // Povećanje visine skale (opciono)
         if (timeScaleColumn != null) {
             timeScaleColumn.setMinimumHeight(24 * PIXELS_PER_HOUR); // 24h * visina po satu
         }
 
-        // Filtriraj taskove za ovaj dan i sortiraj po startTime
         List<TaskItemDto> dayTasks = new ArrayList<>();
         for (TaskItemDto task : tasks) {
             LocalDate taskDate = Instant.ofEpochMilli(task.getStartTime())
@@ -398,18 +378,13 @@ public class CalendarFragment extends Fragment {
         }
         dayTasks.sort((t1, t2) -> Long.compare(t1.getStartTime(), t2.getStartTime()));
 
-        // Dodavanje taskova u Day Column Layout
-        // U Day View-u, koristite CardView i LinearLayout da zauzmu više prostora (veći prikaz)
         for (TaskItemDto task : dayTasks) {
             Calendar cal = Calendar.getInstance();
             cal.setTimeInMillis(task.getStartTime());
             int hour = cal.get(Calendar.HOUR_OF_DAY);
             int minute = cal.get(Calendar.MINUTE);
 
-            // U Day View-u, pozicija je manje bitna jer koristimo vertikalni scroll
-            // Ali možete dodati prazan prostor za "vremensku" poziciju
 
-            // Vaša originalna logika:
             View taskView = LayoutInflater.from(getContext()).inflate(R.layout.item_task, dayColumnLayout, false);
 
             MaterialCardView card = taskView.findViewById(R.id.cardTask);
@@ -423,20 +398,29 @@ public class CalendarFragment extends Fragment {
 
             card.setCardBackgroundColor(Color.parseColor(task.getColor()));
 
-            // Ovi LayoutParams diktiraju veličinu i margine vaše CardView kartice.
-            // Zbog LinearLayout-a, vertikalno se nižu jedan ispod drugog.
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT // Koristite WRAP_CONTENT umesto 400 za dinamičku visinu
+                    ViewGroup.LayoutParams.WRAP_CONTENT
             );
 
-            params.setMargins(30, 20, 30, 20); // Margine između kartica
+            params.setMargins(30, 20, 30, 20);
 
             dayColumnLayout.addView(taskView, params);
+            taskView.setOnClickListener(v -> {
+                Bundle bundle = new Bundle();
+                bundle.putString("TASK_INSTANCE_ID", task.getInstanceId());
+
+                TaskDetailFragment detailFragment = new TaskDetailFragment();
+                detailFragment.setArguments(bundle);
+
+                requireActivity().getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, detailFragment)
+                        .addToBackStack(null)
+                        .commit();
+            });
         }
     }
 
-    // --- POMOĆNE METODE ---
 
     private void loadTasks(long startDate, long endDate) {
         List<TaskInstance> instances = taskInstanceRepositoryImpl.getTasksByDateRange(startDate, endDate);
@@ -451,8 +435,6 @@ public class CalendarFragment extends Fragment {
             TaskTemplate template = templatesMap.get(instance.getTemplateId());
             String color = categoryRepositoryImpl.getColorById(template.getCategoryId());
 
-            // NAPOMENA: Dodao sam template.isRecurring() jer je TaskItemDto uvek primao 6 parametara
-            // (Ili se TaskItemDto mora prilagoditi da prima 5)
             tasks.add(new TaskItemDto(
                     instance.getInstanceId(),
                     template.getName(),
@@ -460,7 +442,7 @@ public class CalendarFragment extends Fragment {
                     instance.getInstanceDate(),
                     instance.getStatus().toString(),
                     color,
-                    template.isRecurring() // Dodato kao pretpostavljeni 6. parametar
+                    template.isRecurring()
             ));
         }
     }

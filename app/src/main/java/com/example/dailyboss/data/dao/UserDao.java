@@ -21,7 +21,6 @@ public class UserDao {
         dbHelper = new DatabaseHelper(context);
     }
 
-    // ✨ MODIFIKOVANO: Metoda sada pokušava da ubaci ili ažurira korisnika
     public boolean upsert(User user) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -32,7 +31,7 @@ public class UserDao {
         values.put(DatabaseHelper.COL_USER_AVATAR, user.getAvatar());
         values.put(DatabaseHelper.COL_USER_IS_ACTIVE, user.isActive() ? 1 : 0);
         values.put(DatabaseHelper.COL_USER_REG_TIMESTAMP, user.getRegistrationTimestamp());
-
+        values.put(DatabaseHelper.COL_USER_ALLIANCE_ID, user.getAllianceId());
         long result = db.update(DatabaseHelper.TABLE_USERS, values,
                 DatabaseHelper.COL_USER_ID + " = ?", new String[]{user.getId()});
 
@@ -42,11 +41,9 @@ public class UserDao {
         } else {
             Log.d(TAG, "Updating existing user: " + user.getUsername() + ", Result: " + result);
         }
-        db.close();
         return result != -1;
     }
 
-    // Prethodna insert metoda (može se ukloniti ili ostaviti ako imate specifične scenarije)
     public boolean insert(User user) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -57,14 +54,11 @@ public class UserDao {
         values.put(DatabaseHelper.COL_USER_AVATAR, user.getAvatar());
         values.put(DatabaseHelper.COL_USER_IS_ACTIVE, user.isActive() ? 1 : 0);
         values.put(DatabaseHelper.COL_USER_REG_TIMESTAMP, user.getRegistrationTimestamp());
-
+        values.put(DatabaseHelper.COL_USER_ALLIANCE_ID, user.getAllianceId());
         long result = db.insert(DatabaseHelper.TABLE_USERS, null, values);
-        db.close();
         return result != -1;
     }
 
-
-    // ✨ NOVO: Dohvatanje korisnika po UID-u
     public User getUser(String userId) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.query(DatabaseHelper.TABLE_USERS, null,
@@ -80,15 +74,14 @@ public class UserDao {
                     cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_PASSWORD)),
                     cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_AVATAR)),
                     cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_IS_ACTIVE)) == 1,
-                    cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_REG_TIMESTAMP))
+                    cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_REG_TIMESTAMP)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_ALLIANCE_ID))
             );
         }
         cursor.close();
-        db.close();
         return user;
     }
 
-    // Prethodna metoda za dohvatanje po username (ostaje)
     public User getUserByUsername(String username) {
         SQLiteDatabase db = dbHelper.getReadableDatabase();
         Cursor cursor = db.query(DatabaseHelper.TABLE_USERS, null,
@@ -104,29 +97,26 @@ public class UserDao {
                     cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_PASSWORD)),
                     cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_AVATAR)),
                     cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_IS_ACTIVE)) == 1,
-                    cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_REG_TIMESTAMP))
+                    cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_REG_TIMESTAMP)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_ALLIANCE_ID))
             );
         }
         cursor.close();
-        db.close();
         return user;
     }
 
-    // ✨ NOVO: Metoda za ažuriranje postojećeg korisnika
     public boolean update(User user) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
-        // UID ne ažuriramo, on je PK
         values.put(DatabaseHelper.COL_USER_USERNAME, user.getUsername());
         values.put(DatabaseHelper.COL_USER_EMAIL, user.getEmail());
         values.put(DatabaseHelper.COL_USER_PASSWORD, user.getPassword());
         values.put(DatabaseHelper.COL_USER_AVATAR, user.getAvatar());
         values.put(DatabaseHelper.COL_USER_IS_ACTIVE, user.isActive() ? 1 : 0);
         values.put(DatabaseHelper.COL_USER_REG_TIMESTAMP, user.getRegistrationTimestamp());
-
+        values.put(DatabaseHelper.COL_USER_ALLIANCE_ID, user.getAllianceId());
         int rowsAffected = db.update(DatabaseHelper.TABLE_USERS, values,
                 DatabaseHelper.COL_USER_ID + " = ?", new String[]{user.getId()});
-        db.close();
         return rowsAffected > 0;
     }
 
@@ -143,13 +133,77 @@ public class UserDao {
                     cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_PASSWORD)),
                     cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_AVATAR)),
                     cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_IS_ACTIVE)) == 1,
-                    cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_REG_TIMESTAMP))
+                    cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_REG_TIMESTAMP)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_ALLIANCE_ID))
             );
             users.add(user);
         }
 
         cursor.close();
-        db.close();
+        return users;
+    }
+
+    public List<User> searchUsersByUsername(String query) {
+        List<User> users = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        String[] selectionArgs = new String[]{"%" + query + "%"};
+
+         String selection = DatabaseHelper.COL_USER_USERNAME + " LIKE ? COLLATE NOCASE";
+
+        Cursor cursor = db.query(DatabaseHelper.TABLE_USERS, null, selection, selectionArgs, null, null, null);
+
+        while (cursor.moveToNext()) {
+            User user = new User(
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_USERNAME)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_EMAIL)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_PASSWORD)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_AVATAR)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_IS_ACTIVE)) == 1,
+                    cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_REG_TIMESTAMP)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_ALLIANCE_ID))
+            );
+            users.add(user);
+        }
+
+        cursor.close();
+        return users;
+    }
+
+    public boolean updateAllianceId(String userId, String allianceId) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(DatabaseHelper.COL_USER_ALLIANCE_ID, allianceId != null ? allianceId : "");
+
+        int rowsAffected = db.update(DatabaseHelper.TABLE_USERS, values,
+                DatabaseHelper.COL_USER_ID + " = ?", new String[]{userId});
+        return rowsAffected > 0;
+    }
+
+    public List<User> getUsersByAllianceId(String allianceId) {
+        List<User> users = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        String selection = DatabaseHelper.COL_USER_ALLIANCE_ID + " = ?";
+        String[] selectionArgs = new String[]{allianceId};
+
+        Cursor cursor = db.query(DatabaseHelper.TABLE_USERS, null, selection, selectionArgs, null, null, null);
+
+        while (cursor.moveToNext()) {
+            User user = new User(
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_ID)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_USERNAME)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_EMAIL)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_PASSWORD)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_AVATAR)),
+                    cursor.getInt(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_IS_ACTIVE)) == 1,
+                    cursor.getLong(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_REG_TIMESTAMP)),
+                    cursor.getString(cursor.getColumnIndexOrThrow(DatabaseHelper.COL_USER_ALLIANCE_ID))
+            );
+            users.add(user);
+        }
+        cursor.close();
         return users;
     }
 }
